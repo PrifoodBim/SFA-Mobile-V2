@@ -16,6 +16,7 @@ export default function Button(props: Readonly<Props>) {
     isFullWidth = true,
     width,
     buttonColor = "primary",
+    ...rest
   } = props
 
   const buttonStyle = isFullWidth
@@ -27,22 +28,22 @@ export default function Button(props: Readonly<Props>) {
   const buttonColorStyle = useMemo(() => {
     switch (buttonColor) {
       case "primary":
-        return "bg-blue-500"
+        return "bg-prifoodgreen"
       case "secondary":
-        return "bg-gray-500"
+        return "bg-prifoodgray500"
       case "tertiary":
-        return "bg-green-500"
+        return "bg-prifoodblue400"
       default:
-        return "bg-blue-500"
+        return "bg-prifoodgreen"
     }
   }, [buttonColor])
 
   return (
     <TouchableOpacity
-      className={`px-4 py-2 rounded ${buttonStyle} ${buttonColorStyle}`}
-      {...props}
+      className={` h-[48px] justify-center items-center rounded-lg ${buttonStyle} ${buttonColorStyle}`}
+      {...rest}
     >
-      <Text className={`text-white text-center `}>{buttonName}</Text>+
+      <Text className={`text-white text-center `}>{buttonName}</Text>
     </TouchableOpacity>
   )
 }
