@@ -136,7 +136,7 @@ export default function Login() {
           buttonStyle={{ marginTop: 20, alignSelf: "center" }}
         />
         <LinkButton onPress={() => router.push(Route.FORGOT_PASSWORD)}>
-          <LinkText>Forgot Password?</LinkText>
+          <LinkText>Password Forgot?</LinkText>
         </LinkButton>
       </ScrollView>
       {!isKeyboardVisible && (
