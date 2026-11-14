@@ -1,56 +1,68 @@
-# Welcome to your Expo app 👋
+# PriFood SFA Mobile (V2)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Sales-force automation app for PriFood field reps: daily customer coverage, visit
+transactions (OSA, inventory, delivery, planogram, market analysis, notes, orders, DAR),
+offline storage and data sync. Expo SDK 57 rewrite of `Prifood-Mobile-SFA`.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run
 
 ```bash
-npm run reset-project
+npm install
+npx expo run:android   # or run:ios — needs a development build (maps, camera, sqlite)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Optional `.env` (see `.env.example`): `EXPO_PUBLIC_API_URL` overrides the production API URL.
 
-### Other setup steps
+Scripts: `npm run typecheck`, `npm run lint`, `npm run format`.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Builds (EAS)
 
-## Learn more
+Project: `@bimsauco-project/sfa-mobile` on expo.dev. Android only for now.
 
-To learn more about developing your project with Expo, look at the following resources:
+| Command | Profile | Output |
+|---|---|---|
+| `npm run build:dev` | development | APK with the dev client (loads code from Metro) |
+| `npm run build:preview` | preview | Installable APK for testers |
+| `npm run build:production` | production | AAB for Google Play, build number auto-increments |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The Android keystore is generated and kept on EAS on the first build; back it up with `eas credentials`.
 
-## Join the community
+`EXPO_PUBLIC_API_URL` comes from the EAS environment of each profile (`eas env:list --environment production`), so builds and updates use the same value.
 
-Join our community of developers creating universal apps.
+## OTA updates (EAS Update)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+JS/asset changes ship without a new APK:
+
+```bash
+npm run update:preview -- --message "Fix OSA save"      # testers (preview builds)
+npm run update:production -- --message "Fix OSA save"   # field reps (production builds)
+```
+
+- Each build profile listens to the channel of the same name (`development`, `preview`, `production`).
+- The app downloads an update in the background on launch and applies it on the next launch.
+- `runtimeVersion` uses the `fingerprint` policy: an update only reaches builds with the same native code. After adding/upgrading a native package or changing `app.json` native config, make a new build first (`npm run build:*`), then publish updates.
+- Check what a build will accept: `npx expo-updates runtimeversion:resolve --platform android`.
+- Roll back: `eas update:republish` an earlier update, or `eas update:rollback`.
+
+## Structure
+
+```
+src/
+  app/            expo-router routes (thin files that re-export screens)
+    (main)/       signed-in area: tabs home / search / alerts
+    dialog.tsx, loading-overlay.tsx, …   transparent modal routes
+  modules/<area>/ feature code: screens/, components/, controllers/, services/, models/, types/, constants/
+  components/     shared UI (styled-components)
+  db/             expo-sqlite document store + shared models (replaces Realm)
+  lib/modal/      route-based modals: confirm(), alert(), showLoading(), openModalRoute()
+  provider/       Session, User, CustomerVisit contexts
+  services/       API calls (axios instance in config/api.ts)
+  constants/      routes, theme, images, strings
+```
+
+## Conventions
+
+- Styling: `styled-components/native` with the theme in `src/constants/theme.ts`.
+- Navigation: `router.push(Route.X)` with paths from `src/constants/routes.ts`.
+- Data: `useQuery(Model, { where, filter, sort })` for live lists, `insert` / `upsert` / `update` / `remove` / `write` for changes (`src/db`).
+- Modals are routes: `if (await confirm({ title, message })) { … }`.
