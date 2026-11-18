@@ -1,4 +1,4 @@
-import { createId, query, update, upsertMany, write } from "@/db"
+import { createId, query, toTransId, update, upsertMany, write } from "@/db"
 import { imageDownload } from "@/services/image-service"
 import { FileDownloadType } from "@/types/FileDownloadType"
 import { getFileName } from "@/utils/image.utils"
@@ -31,7 +31,7 @@ const handlePlanogramRecordSync = async (data: PlanogramRecord) => {
   formdata.append("UserName", data.username)
   formdata.append("CustomerCode", data.customerCode)
   formdata.append("GroupCode", data.groupCode)
-  formdata.append("TransId", data._id)
+  formdata.append("TransId", toTransId(data._id))
   formdata.append("PlanogramCode", data.planogramCode)
   formdata.append("ImageBefore", imagePart(data.imageBefore))
   formdata.append("ImageAfter", imagePart(data.imageAfter))

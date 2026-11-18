@@ -1,4 +1,4 @@
-import { query, update } from "@/db"
+import { query, toTransId, update } from "@/db"
 import { Inventory, InventoryModel } from "../models/Inventory.model"
 import { uploadInventoryTransaction } from "../services/customer.service"
 import { InventoryPayload } from "../types/Inventory.type"
@@ -16,7 +16,7 @@ const handleInventorySync = async (data: Inventory) => {
     docDate: new Date().toISOString(),
     userName: data.username,
     customerCode: data.customerCode,
-    transId: data._id,
+    transId: toTransId(data._id),
     lines: data.lines.map(val => ({
       lineNum: val.lineNum,
       productCode: val.productCode,

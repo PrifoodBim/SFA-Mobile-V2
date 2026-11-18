@@ -1,4 +1,4 @@
-import { findById, insert, query, update, upsert, write } from "@/db"
+import { findById, insert, query, toTransId, update, upsert, write } from "@/db"
 import { Dar, DarModel } from "../models/Dar.model"
 import { DarInfoModel } from "../models/DarInfo.model"
 import { getDarData, syncDarUpload } from "../services/customer.service"
@@ -49,7 +49,7 @@ export const syncDarInfoFromServer = async (
 
 const handleUploadedDar = async (data: Dar) => {
   const payload: UploadDarPayloadType = {
-    transId: data._id,
+    transId: toTransId(data._id),
     darDate: data.darDate,
     customerCode: data.customerCode,
     userName: data.userName,

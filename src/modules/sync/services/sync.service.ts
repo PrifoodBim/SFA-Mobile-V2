@@ -3,6 +3,7 @@ import {
   findOne,
   query,
   remove,
+  toTransId,
   update,
   upsert,
   upsertMany,
@@ -241,7 +242,7 @@ export async function sendAndGetMcpLogs(setError: SetError) {
         logDate: log.logDate,
         latitude: log.latitude,
         longitude: log.longitude,
-        transId: log._id,
+        transId: toTransId(log._id),
       })),
     )
     const items = resp.data.items as CoverageLogsResponse[]
@@ -249,7 +250,7 @@ export async function sendAndGetMcpLogs(setError: SetError) {
     const byTransId = new Map(items.map(item => [item.transId, item]))
     write(() => {
       logs.forEach(log => {
-        const responseItem = byTransId.get(log._id)
+        const responseItem = byTransId.get(toTransId(log._id))
         if (responseItem) {
           update(CoverageLogsModel, log._id, {
             converageLogsId: responseItem.coverageLogId,
@@ -565,7 +566,7 @@ export async function uploadMarketAnalysis(data: MarketAnalysis) {
   formData.append("Scheme", data.scheme)
   formData.append("Price", String(+data.price))
   formData.append("Remarks", data.remarks)
-  formData.append("TransId", data._id)
+  formData.append("TransId", toTransId(data._id))
 
   appendImages(data.images ?? [], formData)
 

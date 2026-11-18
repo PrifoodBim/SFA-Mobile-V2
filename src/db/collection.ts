@@ -1,4 +1,4 @@
-import { randomUUID } from "expo-crypto"
+import { getRandomBytes } from "expo-crypto"
 
 /**
  * A collection is a table of JSON documents (the replacement for a Realm model).
@@ -27,5 +27,28 @@ export function defineCollection<T>(
   }
 }
 
-/** Replacement for `new BSON.ObjectId()`. */
-export const createId = () => randomUUID()
+const toHex = (bytes: Uint8Array) =>
+  Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("")
+
+/** Length of generated ids; must fit the server `TransId` columns (30 chars). */
+export const ID_LENGTH = 25
+
+/**
+ * Replacement for `new BSON.ObjectId()`: a 25-char hex id (8-char timestamp +
+ * 17 random hex chars). It is sent to the server as `TransId`, so it must stay
+ * short enough for those columns (30 chars), unlike a 36-char UUID.
+ */
+export const createId = () => {
+  const time = Math.floor(Date.now() / 1000)
+    .toString(16)
+    .padStart(8, "0")
+  return (time + toHex(getRandomBytes(9))).slice(0, ID_LENGTH)
+}
+
+/**
+ * The `TransId` sent to the server for a local record id. Records created
+ * before this change have 36-char UUIDs, which overflow the server column:
+ * those are shortened to 25 hex chars (stable for the same id).
+ */
+export const toTransId = (id: string) =>
+  id.length <= ID_LENGTH ? id : id.replace(/-/g, "").slice(0, ID_LENGTH)

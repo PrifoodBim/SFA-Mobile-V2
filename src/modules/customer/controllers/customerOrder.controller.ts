@@ -1,4 +1,4 @@
-import { query, update } from "@/db"
+import { query, toTransId, update } from "@/db"
 import { CsRecord, CsRecordModel } from "../models/CsRecord.model"
 import { uploadCsRecord } from "../services/customer.service"
 import {
@@ -14,7 +14,7 @@ const handleCsRecordSync = async (data: CsRecord) => {
     csDate: data.csDate,
     userName: data.userName,
     customerCode: data.customerCode,
-    transId: data._id,
+    transId: toTransId(data._id),
     lines: data.lines.map(val => ({
       lineNum: val.lineNum,
       productCode: val.productCode,

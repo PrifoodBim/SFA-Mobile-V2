@@ -1,4 +1,4 @@
-export { createId, defineCollection } from "./collection"
+export { createId, defineCollection, toTransId } from "./collection"
 export type { Collection } from "./collection"
 export {
   findById,

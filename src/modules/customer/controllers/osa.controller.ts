@@ -1,4 +1,4 @@
-import { findById, query, update } from "@/db"
+import { findById, query, toTransId, update } from "@/db"
 import { Osa, OsaModel } from "../models/Osa.model"
 import { uploadOsaTransaction } from "../services/osa.service"
 import { OsaPayload } from "../types/Osa.type"
@@ -29,7 +29,7 @@ const handleOsaSync = async (data: Osa) => {
     osaDate: data.osaDate,
     userName: data.username,
     customerCode: data.customerCode,
-    transId: data._id,
+    transId: toTransId(data._id),
     lines: data.lines.map(val => ({
       lineNum: val.lineNum,
       productCode: val.productCode,

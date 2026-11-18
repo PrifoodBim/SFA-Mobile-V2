@@ -1,4 +1,4 @@
-import { query, update } from "@/db"
+import { query, toTransId, update } from "@/db"
 import { CustomerNote, CustomerNoteModel } from "../models/CustomerNote.model"
 import { uploadCustomerNotes } from "../services/customer.service"
 import { CustomerNotePayload } from "../types/Notes.type"
@@ -12,7 +12,7 @@ const log = createLogger("Sync:CustomerNotes")
 
 const handleCustomerNotesSync = async (data: CustomerNote) => {
   const payload: CustomerNotePayload = {
-    transId: data._id,
+    transId: toTransId(data._id),
     notesDate: data.notesDate,
     customerCode: data.customerCode,
     userName: data.userName,

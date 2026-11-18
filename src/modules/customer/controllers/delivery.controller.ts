@@ -1,4 +1,4 @@
-import { query, update } from "@/db"
+import { query, toTransId, update } from "@/db"
 import { Delivery, DeliveryModel } from "../models/Delivery.model"
 import { uploadDeliveryTransaction } from "../services/customer.service"
 import { DeliveryPayload } from "../types/Delivery.type"
@@ -16,7 +16,7 @@ const handleDeliverySync = async (data: Delivery) => {
     docDate: new Date().toISOString(),
     userName: data.username,
     customerCode: data.customerCode,
-    transId: data._id,
+    transId: toTransId(data._id),
     lines: data.lines.map(val => ({
       lineNum: val.lineNum,
       productCode: val.productCode,
