@@ -1,4 +1,4 @@
-import api from "@/config/api"
+import api, { UPLOAD_TIMEOUT } from "@/config/api"
 import { CsRecordPayload, CsRecordResponse } from "../types/CsRecord.type"
 import {
   DarInfoResponse,
@@ -32,6 +32,7 @@ export const uploadPlanogramRecord = async (
   payload: FormData,
 ): Promise<PlanogramRecordResponse> => {
   const resp = await api.post("planogram-record", payload, {
+    timeout: UPLOAD_TIMEOUT,
     headers: {
       "Content-Type": "multipart/form-data",
     },

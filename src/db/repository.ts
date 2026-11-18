@@ -125,6 +125,32 @@ export function upsert<T>(collection: Collection<T>, doc: Partial<T>): T {
   return merged
 }
 
+/**
+ * Writes many full documents by primary key with a single prepared statement.
+ * Unlike `upsert`, it does not merge with the stored row, so pass complete documents.
+ * Wrap in `write()` so it runs in one transaction.
+ */
+export function upsertMany<T>(collection: Collection<T>, docs: T[]) {
+  ensureTable(collection)
+  const statement = db.prepareSync(
+    `INSERT INTO "${collection.name}" (id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data`,
+  )
+  try {
+    for (const doc of docs) {
+      const record = { ...doc } as Record<string, unknown>
+      if (collection.primaryKey === "_id" && record._id === undefined) {
+        record._id = createId()
+      }
+      statement.executeSync([
+        keyOf(collection, record as T),
+        JSON.stringify(record),
+      ])
+    }
+  } finally {
+    statement.finalizeSync()
+  }
+}
+
 export function update<T>(
   collection: Collection<T>,
   id: string | number,

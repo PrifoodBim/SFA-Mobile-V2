@@ -209,6 +209,7 @@ export default function SyncProgress() {
   const [count, setCount] = useState(0)
   const [errors, setErrors] = useState<string[]>([])
   const [isDone, setIsDone] = useState(false)
+  const [failedStepCount, setFailedStepCount] = useState(0)
   const isOfflineAlertShown = useRef(false)
 
   // The sync can't be cancelled midway: block the hardware back button.
@@ -282,6 +283,7 @@ export default function SyncProgress() {
         }
       }
 
+      setFailedStepCount(failedSteps.length)
       const totalDuration = ((Date.now() - syncStart) / 1000).toFixed(1)
       if (failedSteps.length > 0) {
         log.warn(
@@ -290,15 +292,18 @@ export default function SyncProgress() {
       } else {
         log.info(`Sync finished in ${totalDuration}s, all steps succeeded`)
       }
-      doneTimer = setTimeout(() => setIsDone(true), 5000)
+      if (!cancelled) {
+        setIsDone(true)
+      }
     }
 
-    let doneTimer: ReturnType<typeof setTimeout> | undefined
-    const startTimer = setTimeout(syncData, 2000)
+    let cancelled = false
+    // Short delay so the modal paints before the (synchronous) DB work starts.
+    const startTimer = setTimeout(syncData, 300)
 
     return () => {
+      cancelled = true
       clearTimeout(startTimer)
-      clearTimeout(doneTimer)
     }
     // Runs once when the modal opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -307,7 +312,7 @@ export default function SyncProgress() {
   if (isDone) {
     const message =
       errors.length > 0
-        ? `Your ${TOTAL_STEPS - errors.length} out of ${TOTAL_STEPS} data has been successfully synced! Thank you for patience!`
+        ? `Your ${TOTAL_STEPS - failedStepCount} out of ${TOTAL_STEPS} data has been successfully synced! Thank you for patience!`
         : "Your data has been successfully synced! Thank you for your patience!"
 
     return (

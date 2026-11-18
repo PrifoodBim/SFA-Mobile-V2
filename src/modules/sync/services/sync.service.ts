@@ -1,11 +1,11 @@
 import {
   createId,
   findOne,
-  insert,
   query,
   remove,
   update,
   upsert,
+  upsertMany,
   write,
 } from "@/db"
 import { Coverage, CoverageModel } from "@/db/models/Coverage.model"
@@ -17,7 +17,7 @@ import {
   MarketAnalysis,
   MarketAnalysisModel,
 } from "@/db/models/MarketAnalysis.model"
-import { OptionModel } from "@/db/models/Option.model"
+import { Option, OptionModel } from "@/db/models/Option.model"
 import { Product, ProductModel } from "@/db/models/Product.model"
 import {
   ProductPartner,
@@ -38,6 +38,7 @@ import { getProductPartners } from "@/services/product-partners.service"
 import { getAllProducts } from "@/services/product.service"
 import { getSettingsApi } from "@/services/settings.service"
 import { OptionTypeEnum } from "@/types/Option.type"
+import { DOWNLOAD_CONCURRENCY, mapLimit } from "@/utils/async.utils"
 import { createLogger } from "@/utils/logger"
 import { failedUploadMessage, uploadPending } from "../uploadPending"
 
@@ -45,7 +46,7 @@ const log = createLogger("Sync")
 
 type SetError = (error: string) => void
 
-type CoverageResponse = Omit<
+export type CoverageResponse = Omit<
   Coverage,
   "_id" | "isVisited" | "coverageDate" | "createDate" | "updatedDate"
 > & {
@@ -114,82 +115,110 @@ export async function handleGetUserInfo(setError: SetError) {
   }
 }
 
-/**
- * Removes the coverage created on mobile (unplanned customer, `coverageId` 0)
- * once the MCP has the same customer and date. Returns whether it was visited.
- * Must run inside `write()`.
- */
-export function removeSystemGeneratedCoverage(element: {
-  customerCode: string
-  coverageDate: string | Date
-}): boolean {
-  const coverageDate = new Date(element.coverageDate)
-  const startOfDay = new Date(
-    coverageDate.getFullYear(),
-    coverageDate.getMonth(),
-    coverageDate.getDate(),
+function sameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
   )
-  const endOfDay = new Date(
-    coverageDate.getFullYear(),
-    coverageDate.getMonth(),
-    coverageDate.getDate() + 1,
-  )
-  const systemGenerated = query(CoverageModel, {
-    where: { coverageId: 0, customerCode: element.customerCode },
-    filter: coverage =>
-      coverage.coverageDate >= startOfDay && coverage.coverageDate < endOfDay,
-  })
+}
 
-  const isVisited = systemGenerated.some(val => val.isVisited === 1)
-  remove(CoverageModel, systemGenerated)
-  return isVisited
+/**
+ * Saves the MCP coverage list from the server with one read and one write.
+ *
+ * A new coverage replaces the coverage created on mobile for an unplanned
+ * customer (`coverageId` 0) on the same customer and day, keeping its visited
+ * flag. Existing coverages are updated only when `updateExisting` is set
+ * (the login screen only adds missing ones).
+ */
+export function saveCoverageList(
+  items: CoverageResponse[],
+  { updateExisting }: { updateExisting: boolean },
+) {
+  const all = query(CoverageModel)
+  const byCoverageId = new Map<number, Coverage>()
+  const systemGeneratedByCustomer = new Map<string, Coverage[]>()
+  for (const coverage of all) {
+    if (coverage.coverageId === 0) {
+      const list = systemGeneratedByCustomer.get(coverage.customerCode) ?? []
+      list.push(coverage)
+      systemGeneratedByCustomer.set(coverage.customerCode, list)
+    } else {
+      byCoverageId.set(coverage.coverageId, coverage)
+    }
+  }
+
+  const toWrite = new Map<number, Coverage>()
+  const toRemove: Coverage[] = []
+  const now = new Date()
+
+  for (const element of items) {
+    const existing = byCoverageId.get(element.coverageId)
+    const coverageDate = new Date(element.coverageDate)
+    let doc: Coverage
+
+    if (!existing) {
+      const candidates = systemGeneratedByCustomer.get(element.customerCode)
+      const systemGenerated =
+        candidates?.filter(c => sameDay(c.coverageDate, coverageDate)) ?? []
+      if (systemGenerated.length > 0) {
+        toRemove.push(...systemGenerated)
+        systemGeneratedByCustomer.set(
+          element.customerCode,
+          candidates!.filter(c => !systemGenerated.includes(c)),
+        )
+      }
+      const isSystemGeneratedVisited = systemGenerated.some(
+        c => c.isVisited === 1,
+      )
+      doc = {
+        _id: createId(),
+        coverageId: element.coverageId,
+        coverageDate,
+        userName: element.userName,
+        empId: element.empId,
+        empName: element.empName,
+        position: element.position,
+        customerCode: element.customerCode,
+        customerName: element.customerName,
+        priority: element.priority,
+        planned: element.planned,
+        status: element.status,
+        isVisited: element.visited || isSystemGeneratedVisited ? 1 : 0,
+        updatedBy: element.empId,
+        updatedDate: now,
+        createBy: element.empId,
+        createDate: now,
+      }
+    } else if (updateExisting) {
+      const { visited, coverageDate: _date, ...rest } = element
+      doc = {
+        ...existing,
+        ...rest,
+        coverageDate,
+        isVisited: visited ? 1 : 0,
+        updatedBy: element.empId,
+        updatedDate: now,
+      }
+    } else {
+      continue
+    }
+
+    byCoverageId.set(element.coverageId, doc)
+    toWrite.set(element.coverageId, doc)
+  }
+
+  write(() => {
+    remove(CoverageModel, toRemove)
+    upsertMany(CoverageModel, [...toWrite.values()])
+  })
 }
 
 export async function getMcp(setError: SetError) {
   try {
     const resp = await getCoverageList()
-    const items = resp.items as CoverageResponse[]
-
-    write(() => {
-      items.forEach(element => {
-        const existing = findOne(CoverageModel, {
-          where: { coverageId: element.coverageId },
-        })
-
-        if (!existing) {
-          const isSystemGeneratedVisited =
-            removeSystemGeneratedCoverage(element)
-          insert(CoverageModel, {
-            _id: createId(),
-            coverageId: element.coverageId,
-            coverageDate: new Date(element.coverageDate),
-            userName: element.userName,
-            empId: element.empId,
-            empName: element.empName,
-            position: element.position,
-            customerCode: element.customerCode,
-            customerName: element.customerName,
-            priority: element.priority,
-            planned: element.planned,
-            status: element.status,
-            isVisited: element.visited || isSystemGeneratedVisited ? 1 : 0,
-            updatedBy: element.empId,
-            updatedDate: new Date(),
-            createBy: element.empId,
-            createDate: new Date(),
-          })
-        } else {
-          const { visited, coverageDate, ...rest } = element
-          upsert(CoverageModel, {
-            ...existing,
-            ...rest,
-            coverageDate: new Date(coverageDate),
-            isVisited: visited ? 1 : 0,
-            updatedBy: element.empId,
-            updatedDate: new Date(),
-          })
-        }
-      })
+    saveCoverageList(resp.items as CoverageResponse[], {
+      updateExisting: true,
     })
   } catch (error) {
     log.error("Getting of coverage not sync", error)
@@ -217,9 +246,10 @@ export async function sendAndGetMcpLogs(setError: SetError) {
     )
     const items = resp.data.items as CoverageLogsResponse[]
 
+    const byTransId = new Map(items.map(item => [item.transId, item]))
     write(() => {
       logs.forEach(log => {
-        const responseItem = items.find(item => item.transId === log._id)
+        const responseItem = byTransId.get(log._id)
         if (responseItem) {
           update(CoverageLogsModel, log._id, {
             converageLogsId: responseItem.coverageLogId,
@@ -238,35 +268,46 @@ export async function getCustomer(setError: SetError) {
     const resp = await getCustomers()
     const items = resp.items as CustomerResponse[]
 
-    write(() => {
-      items.forEach(element => {
-        const existing = findOne(CustomerModel, {
-          where: { code: element.code },
-        })
-        const lastmod = element.lastModificationTime ?? ""
+    // One read + one bulk write instead of a full-table findOne per item.
+    const byCode = new Map<string, Customer>()
+    for (const doc of query(CustomerModel)) {
+      byCode.set(doc.code, doc)
+    }
 
-        if (!existing) {
-          insert(CustomerModel, {
-            ...element,
-            _id: createId(),
-            lastModificationTime: lastmod,
-            isUpdated: 1,
-          })
-        } else {
-          upsert(CustomerModel, {
-            ...existing,
-            ...element,
-            lastModificationTime: lastmod,
-            // Stays 1 until the image is downloaded (see imageCustomer).
-            isUpdated:
-              lastmod !== existing.lastModificationTime ||
-              existing.isUpdated === 1
-                ? 1
-                : 0,
-          })
-        }
-      })
-    })
+    for (const element of items) {
+      const existing = byCode.get(element.code)
+      const lastmod = element.lastModificationTime ?? ""
+
+      byCode.set(
+        element.code,
+        !existing
+          ? ({
+              ...element,
+              _id: createId(),
+              lastModificationTime: lastmod,
+              isUpdated: 1,
+            } as Customer)
+          : ({
+              ...existing,
+              ...element,
+              lastModificationTime: lastmod,
+              // Stays 1 until the image is downloaded (see imageCustomer).
+              isUpdated:
+                lastmod !== existing.lastModificationTime ||
+                existing.isUpdated === 1
+                  ? 1
+                  : 0,
+            } as Customer),
+      )
+    }
+
+    const changed = new Set(items.map(element => element.code))
+    write(() =>
+      upsertMany(
+        CustomerModel,
+        [...byCode.values()].filter(doc => changed.has(doc.code)),
+      ),
+    )
   } catch (error) {
     log.error("Getting of customer not sync", error)
     setError("Getting of customer not sync")
@@ -278,38 +319,56 @@ export async function productPartnerList(setError: SetError) {
     const resp = await getProductPartners()
     const products = resp.items as ProductPartnerResponse[]
 
-    write(() => {
-      products.forEach(val => {
-        const existing = findOne(ProductPartnerModel, {
-          where: { productPartnerId: val.id },
-        })
-        const lastmod = val.lastModificationTime ?? ""
+    // Load existing rows once and index them by productPartnerId. Looking each
+    // item up with findOne() scans the whole table (json_extract, no index),
+    // which made this sync O(n²) for ~10k partners.
+    const existingById = new Map<number, ProductPartner>()
+    for (const doc of query(ProductPartnerModel)) {
+      existingById.set(doc.productPartnerId, doc)
+    }
 
-        if (!existing) {
-          const payload: ProductPartner = {
-            _id: createId(),
-            productPartnerId: val.id,
-            packingType: val.productPacking,
-            ...val,
-            lastModificationTime: lastmod,
-            isUpdated: 1,
-          }
-          insert(ProductPartnerModel, payload)
-        } else {
-          upsert(ProductPartnerModel, {
-            ...existing,
-            ...val,
-            lastModificationTime: lastmod,
-            packingType: val.productPacking,
-            isUpdated: existing.lastModificationTime === lastmod ? 0 : 1,
-          })
-        }
-      })
+    const docs = products.map(val => {
+      const existing = existingById.get(val.id)
+      const doc = buildPartner(val, existing)
+      existingById.set(val.id, doc)
+      return doc
     })
+
+    write(() =>
+      upsertMany(ProductPartnerModel, [
+        ...new Map(docs.map(doc => [doc.productPartnerId, doc])).values(),
+      ]),
+    )
   } catch (error) {
     log.error("Getting of product partner not sync", error)
     setError("Getting of product partner not sync")
   }
+}
+
+function buildPartner(
+  val: ProductPartnerResponse,
+  existing: ProductPartner | undefined,
+): ProductPartner {
+  const lastmod = val.lastModificationTime ?? ""
+
+  if (!existing) {
+    const payload: ProductPartner = {
+      _id: createId(),
+      productPartnerId: val.id,
+      packingType: val.productPacking,
+      ...val,
+      lastModificationTime: lastmod,
+      isUpdated: 1,
+    }
+    return payload
+  }
+  return {
+    ...existing,
+    ...val,
+    lastModificationTime: lastmod,
+    packingType: val.productPacking,
+    isUpdated: existing.lastModificationTime === lastmod ? 0 : 1,
+  } as ProductPartner
 }
 
 export async function getProductList(setError: SetError) {
@@ -317,31 +376,44 @@ export async function getProductList(setError: SetError) {
     const resp = await getAllProducts()
     const products = resp.items as ProductResponse[]
 
-    write(() => {
-      products.forEach(val => {
-        const existing = findOne(ProductModel, { where: { code: val.code } })
-        const lastmod = val.lastModificationTime ?? ""
+    // One read + one bulk write instead of a full-table findOne per item.
+    const byCode = new Map<string, Product>()
+    for (const doc of query(ProductModel)) {
+      byCode.set(doc.code, doc)
+    }
 
-        if (!existing) {
-          insert(ProductModel, {
-            _id: createId(),
-            code: val.code,
-            name: val.name,
-            statusCode: val.statusCode,
-            statusName: val.statusName,
-            lastModificationTime: lastmod,
-            isUpdated: 1,
-          })
-        } else {
-          upsert(ProductModel, {
-            ...existing,
-            ...val,
-            lastModificationTime: lastmod,
-            isUpdated: existing.lastModificationTime === lastmod ? 0 : 1,
-          })
-        }
-      })
-    })
+    for (const val of products) {
+      const existing = byCode.get(val.code)
+      const lastmod = val.lastModificationTime ?? ""
+
+      byCode.set(
+        val.code,
+        !existing
+          ? ({
+              _id: createId(),
+              code: val.code,
+              name: val.name,
+              statusCode: val.statusCode,
+              statusName: val.statusName,
+              lastModificationTime: lastmod,
+              isUpdated: 1,
+            } as Product)
+          : ({
+              ...existing,
+              ...val,
+              lastModificationTime: lastmod,
+              isUpdated: existing.lastModificationTime === lastmod ? 0 : 1,
+            } as Product),
+      )
+    }
+
+    const changed = new Set(products.map(val => val.code))
+    write(() =>
+      upsertMany(
+        ProductModel,
+        [...byCode.values()].filter(doc => changed.has(doc.code)),
+      ),
+    )
   } catch (error) {
     log.error("Getting of product not sync", error)
     setError("Getting of product not sync")
@@ -384,14 +456,16 @@ export async function imageCustomer(setError: SetError) {
     }
     log.info(`Customer images: downloading ${customers.length}`)
 
-    const results = await Promise.all(
-      customers.map(async customer => ({
+    const results = await mapLimit(
+      customers,
+      DOWNLOAD_CONCURRENCY,
+      async customer => ({
         customer,
         result: await imageDownloadWithStatus(
           `customers/${customer.code}/image`,
           customer.code,
         ),
-      })),
+      }),
     )
 
     // Only a downloaded or missing (404) image is done; failures retry next sync.
@@ -430,10 +504,8 @@ export async function productImage(setError: SetError) {
   try {
     const products = query(ProductModel, { where: { isUpdated: 1 } })
 
-    const results = await Promise.all(
-      products.map(item =>
-        imageDownload(`products/${item.code}/image`, item.code),
-      ),
+    const results = await mapLimit(products, DOWNLOAD_CONCURRENCY, item =>
+      imageDownload(`products/${item.code}/image`, item.code),
     )
     logDownloads("Product images", results)
   } catch (error) {
@@ -565,24 +637,47 @@ export async function getMapsettings(setError: SetError) {
   }
 }
 
+/**
+ * Inserts or updates the options of one type by code, keeping each option's
+ * `subType`. Looks up existing options by code *and* type, so an option of
+ * another type with the same code is never overwritten.
+ */
+export function saveOptions(
+  type: OptionTypeEnum,
+  items: OptionResponse[],
+  { updateExisting = true }: { updateExisting?: boolean } = {},
+) {
+  const byCode = new Map<string, Option>()
+  for (const option of query(OptionModel, { where: { type } })) {
+    byCode.set(option.code, option)
+  }
+
+  const toWrite = new Map<string, Option>()
+  for (const val of items) {
+    const existing = byCode.get(val.code)
+    if (existing && !updateExisting) {
+      continue
+    }
+    const doc: Option = {
+      ...existing,
+      _id: existing?._id ?? createId(),
+      code: val.code,
+      value: val.name,
+      type,
+      subType: existing?.subType ?? [],
+    }
+    byCode.set(val.code, doc)
+    toWrite.set(val.code, doc)
+  }
+
+  write(() => upsertMany(OptionModel, [...toWrite.values()]))
+}
+
 export async function handleOptionDemoGroup(setError: SetError) {
   try {
     const resp = (await getDemoGroups()) as OptionResponse[]
 
-    write(() => {
-      resp.forEach(val => {
-        const existing = findOne(OptionModel, { where: { code: val.code } })
-
-        upsert(OptionModel, {
-          ...existing,
-          _id: existing?._id ?? createId(),
-          code: val.code,
-          value: val.name,
-          type: OptionTypeEnum.DEMO_GROUPS,
-          subType: existing?.subType ?? [],
-        })
-      })
-    })
+    saveOptions(OptionTypeEnum.DEMO_GROUPS, resp)
   } catch (error) {
     log.error("Demo group option not sync", error)
     setError("Demo group option not sync")
@@ -593,22 +688,7 @@ export async function handleOptionMarketTypes(setError: SetError) {
   try {
     const resp = (await getMarketTypes()) as OptionResponse[]
 
-    write(() => {
-      resp.forEach(val => {
-        const existing = findOne(OptionModel, {
-          where: { code: val.code, type: OptionTypeEnum.MARKET_TYPES },
-        })
-
-        upsert(OptionModel, {
-          ...existing,
-          _id: existing?._id ?? createId(),
-          code: val.code,
-          value: val.name,
-          type: OptionTypeEnum.MARKET_TYPES,
-          subType: existing?.subType ?? [],
-        })
-      })
-    })
+    saveOptions(OptionTypeEnum.MARKET_TYPES, resp)
   } catch (error) {
     log.error("Market types options not sync", error)
     setError("Market types options not sync")
@@ -620,29 +700,41 @@ export async function fetchDemo(setError: SetError) {
     const data = (await getDemo()) as DemoResponse[]
     const fileIds: string[] = []
 
-    write(() => {
-      data.forEach(val => {
-        const { lastModificationTime, docDate, ...rest } = val
-        const existing = findOne(DemoModel, { where: { code: val.code } })
+    const byCode = new Map<string, Demo>()
+    for (const demo of query(DemoModel)) {
+      byCode.set(demo.code, demo)
+    }
 
-        if (existing && lastModificationTime === existing.updatedAt) {
-          return
-        }
+    const toWrite = new Map<string, Demo>()
+    for (const val of data) {
+      const { lastModificationTime, docDate, ...rest } = val
+      const existing = byCode.get(val.code)
 
-        upsert(DemoModel, {
-          ...rest,
-          _id: existing?._id ?? createId(),
-          docDate: new Date(docDate),
-          fileData: val.fileData ? val.fileData : "",
-          updatedAt: lastModificationTime ?? "",
-        })
-        fileIds.push(val.imageFileObjectId)
-      })
-    })
+      if (existing && (lastModificationTime ?? "") === existing.updatedAt) {
+        continue
+      }
 
-    await Promise.all(
-      fileIds.map(fileId => imageDownload(`files/${fileId}/download`, fileId)),
+      const doc = {
+        ...existing,
+        ...rest,
+        _id: existing?._id ?? createId(),
+        docDate: new Date(docDate),
+        fileData: val.fileData ? val.fileData : "",
+        updatedAt: lastModificationTime ?? "",
+      } as Demo
+      byCode.set(val.code, doc)
+      toWrite.set(val.code, doc)
+      fileIds.push(val.imageFileObjectId)
+    }
+
+    write(() => upsertMany(DemoModel, [...toWrite.values()]))
+
+    const results = await mapLimit(
+      [...new Set(fileIds.filter(Boolean))],
+      DOWNLOAD_CONCURRENCY,
+      fileId => imageDownload(`files/${fileId}/download`, fileId),
     )
+    logDownloads("Demo images", results)
   } catch (error) {
     log.error("Demo not Sync", error)
     setError("Demo not Sync")

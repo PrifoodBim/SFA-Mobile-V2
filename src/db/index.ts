@@ -9,6 +9,7 @@ export {
   removeAll,
   update,
   upsert,
+  upsertMany,
   write,
 } from "./repository"
 export type { QueryOptions, SortBy, Where } from "./repository"

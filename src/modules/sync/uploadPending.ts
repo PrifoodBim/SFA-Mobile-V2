@@ -1,3 +1,4 @@
+import { mapLimit, UPLOAD_CONCURRENCY } from "@/utils/async.utils"
 import { Logger } from "@/utils/logger"
 
 type PendingRecord = {
@@ -6,7 +7,7 @@ type PendingRecord = {
 }
 
 /**
- * Uploads every pending record, one failure doesn't stop the others.
+ * Uploads every pending record (a few at a time), one failure doesn't stop the others.
  * Logs each failed record (id, customer, error) and the totals.
  * Returns the number of records that failed.
  */
@@ -21,20 +22,18 @@ export async function uploadPending<T extends PendingRecord>(
   }
   log.info(`Uploading ${records.length} record(s)`)
 
-  const results = await Promise.all(
-    records.map(async record => {
-      try {
-        await uploadOne(record)
-        return true
-      } catch (error) {
-        const customer = record.customerCode
-          ? `, customer ${record.customerCode}`
-          : ""
-        log.error(`Upload failed for record ${record._id}${customer}`, error)
-        return false
-      }
-    }),
-  )
+  const results = await mapLimit(records, UPLOAD_CONCURRENCY, async record => {
+    try {
+      await uploadOne(record)
+      return true
+    } catch (error) {
+      const customer = record.customerCode
+        ? `, customer ${record.customerCode}`
+        : ""
+      log.error(`Upload failed for record ${record._id}${customer}`, error)
+      return false
+    }
+  })
 
   const failed = results.filter(ok => !ok).length
   if (failed > 0) {

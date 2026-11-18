@@ -1,5 +1,4 @@
-import { createId, findOne, insert, upsert, write } from "@/db"
-import { OptionModel } from "@/db/models/Option.model"
+import { saveOptions } from "@/modules/sync/services/sync.service"
 import { OptionTypeEnum } from "@/types/Option.type"
 import {
   getInventoryOption,
@@ -15,22 +14,9 @@ export async function handleInventoryStatusOption(
   try {
     const items = await getInventoryOption()
 
-    write(() => {
-      items.forEach(element => {
-        const existing = findOne(OptionModel, {
-          where: { code: element.code, type: OptionTypeEnum.INVENTORY_STATUS },
-        })
-
-        if (!existing) {
-          insert(OptionModel, {
-            _id: createId(),
-            code: element.code,
-            value: element.name,
-            type: OptionTypeEnum.INVENTORY_STATUS,
-            subType: [],
-          })
-        }
-      })
+    // Only adds missing statuses, like before.
+    saveOptions(OptionTypeEnum.INVENTORY_STATUS, items, {
+      updateExisting: false,
     })
   } catch (error) {
     log.error("Inventory Status not sync", error)
@@ -45,21 +31,7 @@ export async function handlePlanogramGroupsOption(
   try {
     const items = await getPlanogramGroups()
 
-    write(() => {
-      items.forEach(element => {
-        const existing = findOne(OptionModel, {
-          where: { code: element.code, type: OptionTypeEnum.PLANOGRAM_GROUPS },
-        })
-
-        upsert(OptionModel, {
-          _id: existing?._id ?? createId(),
-          code: element.code,
-          value: element.name,
-          type: OptionTypeEnum.PLANOGRAM_GROUPS,
-          subType: [],
-        })
-      })
-    })
+    saveOptions(OptionTypeEnum.PLANOGRAM_GROUPS, items)
   } catch (error) {
     log.error("Planogram not sync", error)
     setError("Planogram not sync")

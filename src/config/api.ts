@@ -5,7 +5,12 @@ import { getDataFromStorage, KEY } from "@/utils/storage.utils"
 export const baseURL =
   process.env.EXPO_PUBLIC_API_URL ?? "https://prifoodonline.com/api/"
 
-const api = axios.create({ baseURL })
+/** Default request timeout, so a hung request can't stall the sync forever. */
+export const REQUEST_TIMEOUT = 60_000
+/** Multipart uploads with photos get more time. */
+export const UPLOAD_TIMEOUT = 180_000
+
+const api = axios.create({ baseURL, timeout: REQUEST_TIMEOUT })
 
 api.interceptors.request.use(async config => {
   try {

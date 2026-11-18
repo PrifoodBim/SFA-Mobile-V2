@@ -1,8 +1,9 @@
-import { createId, findOne, insert, query, update, write } from "@/db"
+import { createId, query, update, upsertMany, write } from "@/db"
 import { imageDownload } from "@/services/image-service"
 import { FileDownloadType } from "@/types/FileDownloadType"
 import { getFileName } from "@/utils/image.utils"
 import {
+  Planogram,
   PlanogramModel,
   PlanogramRecord,
   PlanogramRecordModel,
@@ -15,6 +16,7 @@ import {
   failedUploadMessage,
   uploadPending,
 } from "@/modules/sync/uploadPending"
+import { DOWNLOAD_CONCURRENCY, mapLimit } from "@/utils/async.utils"
 import { createLogger } from "@/utils/logger"
 
 const log = createLogger("Sync:Planogram")
@@ -69,41 +71,50 @@ export const syncPlanogramDataFromServer = async (
     const data = await getCustomerPlanogram()
     const files: FileDownloadType[] = []
 
-    write(() => {
-      data.forEach(val => {
-        const { lastModificationTime, ...planogram } = val
-        const record = findOne(PlanogramModel, { where: { code: val.code } })
+    // One read + one bulk write instead of a full-table findOne per item.
+    const byCode = new Map<string, Planogram>()
+    for (const record of query(PlanogramModel)) {
+      byCode.set(record.code, record)
+    }
 
-        if (!record) {
-          insert(PlanogramModel, {
-            _id: createId(),
-            ...planogram,
-            fileData: val.fileData || "",
-            updatedAt: lastModificationTime ?? "",
-          })
-          files.push({
-            fileId: val.imageFileObjectId,
-            fileName: val.imageFileObjectId,
-          })
-        } else if (lastModificationTime !== record.updatedAt) {
-          update(PlanogramModel, record._id, {
-            status: val.status,
-            imageFileObjectId: val.imageFileObjectId,
-            fileData: val.fileData || "",
-            updatedAt: lastModificationTime ?? "",
-          })
-          files.push({
-            fileId: val.imageFileObjectId,
-            fileName: val.imageFileObjectId,
-          })
+    const toWrite = new Map<string, Planogram>()
+    for (const val of data) {
+      const { lastModificationTime, ...planogram } = val
+      const record = byCode.get(val.code)
+      const updatedAt = lastModificationTime ?? ""
+      let doc: Planogram
+
+      if (!record) {
+        doc = {
+          _id: createId(),
+          ...planogram,
+          fileData: val.fileData || "",
+          updatedAt,
+        } as Planogram
+      } else if (updatedAt !== record.updatedAt) {
+        doc = {
+          ...record,
+          status: val.status,
+          imageFileObjectId: val.imageFileObjectId,
+          fileData: val.fileData || "",
+          updatedAt,
         }
-      })
-    })
+      } else {
+        continue
+      }
 
-    await Promise.all(
-      files.map(val =>
-        imageDownload(`files/${val.fileId}/download`, val.fileName),
-      ),
+      byCode.set(val.code, doc)
+      toWrite.set(val.code, doc)
+      files.push({
+        fileId: val.imageFileObjectId,
+        fileName: val.imageFileObjectId,
+      })
+    }
+
+    write(() => upsertMany(PlanogramModel, [...toWrite.values()]))
+
+    await mapLimit(files, DOWNLOAD_CONCURRENCY, val =>
+      imageDownload(`files/${val.fileId}/download`, val.fileName),
     )
   } catch (error) {
     log.error("Planogram data not Sync", error)

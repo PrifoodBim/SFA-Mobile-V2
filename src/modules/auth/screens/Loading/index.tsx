@@ -5,10 +5,11 @@ import styled from "styled-components/native"
 import { baseURL } from "@/config/api"
 import { Route } from "@/constants/routes"
 import { color } from "@/constants/theme"
-import { createId, findOne, insert, write } from "@/db"
-import { Coverage, CoverageModel } from "@/db/models/Coverage.model"
 import { alert } from "@/lib/modal"
-import { removeSystemGeneratedCoverage } from "@/modules/sync/services/sync.service"
+import {
+  CoverageResponse,
+  saveCoverageList,
+} from "@/modules/sync/services/sync.service"
 import { useSessionContext } from "@/provider/SessionProvider/SessionProvider"
 import { useUserContext } from "@/provider/UserProvider/UserProvider"
 import { getUser } from "@/services/account.service"
@@ -16,12 +17,6 @@ import { getCoverageList } from "@/services/coverage.service"
 import { downloadImage } from "@/utils/image.utils"
 import { getPermission } from "@/utils/permission.utils"
 import { getDataFromStorage, KEY, saveStorage } from "@/utils/storage.utils"
-
-/** Coverage as returned by the server. */
-type CoverageResponse = Omit<Coverage, "_id" | "coverageDate"> & {
-  coverageDate: string
-  visited: boolean
-}
 
 const Wrapper = styled.View`
   flex: 1;
@@ -40,38 +35,9 @@ export default function Loading() {
     try {
       const resp = await getCoverageList()
 
-      write(() => {
-        resp.items.forEach((element: CoverageResponse) => {
-          if (
-            findOne(CoverageModel, {
-              where: { coverageId: element.coverageId },
-            })
-          ) {
-            return
-          }
-          const isSystemGeneratedVisited =
-            removeSystemGeneratedCoverage(element)
-          insert(CoverageModel, {
-            _id: createId(),
-            coverageId: element.coverageId,
-            coverageDate: new Date(element.coverageDate),
-            userName: element.userName,
-            empId: element.empId,
-            empName: element.empName,
-            position: element.position,
-            customerCode: element.customerCode,
-            customerName: element.customerName,
-            priority: element.priority,
-            planned: element.planned,
-            status: element.status,
-            isVisited:
-              element.visited === true || isSystemGeneratedVisited ? 1 : 0,
-            updatedBy: element.empId,
-            updatedDate: new Date(),
-            createBy: element.empId,
-            createDate: new Date(),
-          })
-        })
+      // Adds missing coverage only; the full sync updates existing ones.
+      saveCoverageList(resp.items as CoverageResponse[], {
+        updateExisting: false,
       })
       setIsCoverageSet(true)
     } catch (error) {
