@@ -1,8 +1,7 @@
 import { router, useNavigation } from "expo-router"
 import { useEffect } from "react"
 import { FlatList } from "react-native"
-import styled from "styled-components/native"
-import { OptionCard, UserCard } from "@/components"
+import { Container, OptionCard, UserCard } from "@/components"
 import SizeBox from "@/components/SizeBox"
 import { Route } from "@/constants/routes"
 import { getTransaction } from "@/modules/customer/handlers/transaction.handler"
@@ -10,10 +9,6 @@ import { HOME_OPTIONS, HomeOption } from "@/modules/home/constants/homeOption"
 import { useCustomerVisitContext } from "@/provider/CustomerVisitProvider/CustomerVisitProvider"
 import { useUserContext } from "@/provider/UserProvider/UserProvider"
 import { getDataFromStorage, KEY } from "@/utils/storage.utils"
-
-const Wrapper = styled.View`
-  flex: 1;
-`
 
 export default function Home() {
   const { setUserId, setUserData, userData } = useUserContext()
@@ -56,7 +51,7 @@ export default function Home() {
   }, [])
 
   return (
-    <Wrapper>
+    <Container background={false}>
       <UserCard />
       <SizeBox height={12} />
       <FlatList
@@ -82,6 +77,6 @@ export default function Home() {
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
       />
-    </Wrapper>
+    </Container>
   )
 }

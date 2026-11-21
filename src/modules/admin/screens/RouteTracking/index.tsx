@@ -252,7 +252,7 @@ export default function RouteTracking() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <UserCard />
       <MapWrapper>
         {renderMap()}

@@ -29,7 +29,6 @@ import { getProductName } from "@/utils/string.utils"
 const ListWrapper = styled.View`
   flex: 1;
   margin: 12px 0;
-  padding: 0 12px;
 `
 
 export default function CustomerOrder() {

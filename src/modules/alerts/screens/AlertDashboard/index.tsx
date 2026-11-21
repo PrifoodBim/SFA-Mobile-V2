@@ -84,7 +84,7 @@ export default function AlertDashboard() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <Content>
         <UserCard />
         <ListWrapper>
@@ -123,7 +123,7 @@ export default function AlertDashboard() {
                 </Row>
               </AlertItem>
             )}
-            style={{ width: "90%", alignSelf: "center", marginTop: 4 }}
+            style={{ marginTop: 4 }}
           />
         </ListWrapper>
       </Content>

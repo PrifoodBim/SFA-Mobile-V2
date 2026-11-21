@@ -15,8 +15,7 @@ const Actions = styled.View`
 `
 
 const Content = styled.View`
-  width: 85%;
-  margin: 0 auto;
+  width: 100%;
 `
 
 const Title = styled.Text`
@@ -69,7 +68,7 @@ export default function DataSync() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <UserCard />
       <Actions>
         <Button

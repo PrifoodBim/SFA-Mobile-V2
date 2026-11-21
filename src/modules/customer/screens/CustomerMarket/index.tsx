@@ -122,7 +122,7 @@ export default function CustomerMarket() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <UserCard />
       <S.ActionRow>
         <Button

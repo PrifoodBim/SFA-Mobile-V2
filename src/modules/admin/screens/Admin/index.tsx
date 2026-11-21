@@ -46,9 +46,9 @@ export default function Admin() {
     granted.length % 2 === 0 ? granted : [...granted, null]
 
   return (
-    <Container padding={10}>
+    <Container>
       <UserCard />
-      <SizeBox height={10} />
+      <SizeBox height={12} />
       <FlatList
         data={options}
         style={{ flex: 1 }}

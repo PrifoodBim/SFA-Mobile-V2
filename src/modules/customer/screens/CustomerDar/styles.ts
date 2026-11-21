@@ -10,7 +10,6 @@ export const Scroll = styled.ScrollView.attrs({
 export const Form = styled.View`
   flex: 1;
   gap: 12px;
-  padding: 0 30px;
 `
 
 export const Panel = styled.View`

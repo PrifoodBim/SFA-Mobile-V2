@@ -8,8 +8,7 @@ export const ActionRow = styled.View`
 `
 
 export const Form = styled.View`
-  width: 84%;
-  align-self: center;
+  width: 100%;
 `
 
 export const Fields = styled.View`
@@ -19,7 +18,6 @@ export const Fields = styled.View`
 export const ImageWrapper = styled.View`
   width: 100%;
   margin-top: 12px;
-  padding: 0 12px;
 `
 
 export const Photo = styled.ImageBackground`

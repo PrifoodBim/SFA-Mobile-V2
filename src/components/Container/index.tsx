@@ -1,22 +1,33 @@
-import styled from "styled-components/native"
+import { ImageBackground, StyleSheet, View } from "react-native"
 import { BACKGROUND } from "@/constants/images"
+import { spacing } from "@/constants/theme"
 
 type Props = {
   children: React.ReactNode
-  padding?: number
+  /** Draws the app background image. Off for screens on the plain background. */
+  background?: boolean
 }
 
-const Background = styled.ImageBackground<{ $padding: number }>`
-  flex: 1;
-  padding: ${props => props.$padding}px;
-`
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    paddingTop: spacing.gap,
+    paddingHorizontal: spacing.screen,
+  },
+})
 
-/** Screen wrapper with the app background image. */
+/**
+ * Screen wrapper: applies the standard screen spacing (see `spacing` in the
+ * theme) so every page lines up with Home.
+ */
 export default function Container(props: Readonly<Props>) {
-  const { children, padding = 0 } = props
+  const { children, background = true } = props
+  if (!background) {
+    return <View style={styles.screen}>{children}</View>
+  }
   return (
-    <Background source={BACKGROUND} $padding={padding}>
+    <ImageBackground source={BACKGROUND} style={styles.screen}>
       {children}
-    </Background>
+    </ImageBackground>
   )
 }

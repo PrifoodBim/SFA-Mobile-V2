@@ -40,8 +40,6 @@ const Title = styled.Text`
 
 const ListWrapper = styled.View`
   flex: 1;
-  width: 90%;
-  align-self: center;
   margin: 12px 0;
 `
 
@@ -154,18 +152,18 @@ export default function CoverageList() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <Content>
         <UserCard />
         <CoverageSection>
           <Title>Coverage for Today</Title>
-          <SizeBox height={10} />
+          <SizeBox height={12} />
           <ListWrapper>
             <FlatList
               data={coverages}
               keyExtractor={val => val._id}
               renderItem={renderItem}
-              ItemSeparatorComponent={() => <SizeBox height={10} />}
+              ItemSeparatorComponent={() => <SizeBox height={12} />}
               showsVerticalScrollIndicator={false}
             />
           </ListWrapper>

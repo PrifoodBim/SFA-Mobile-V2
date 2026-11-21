@@ -21,11 +21,6 @@ type Props = {
   description?: string
 }
 
-const Wrapper = styled.View`
-  margin-top: 12px;
-  padding: 0 12px;
-`
-
 const Row = styled.View`
   flex-direction: row;
   gap: 12px;
@@ -72,28 +67,26 @@ export default function UserCard(props: Readonly<Props>) {
   const showImage = !isCurrentUserInfo || !!user
 
   return (
-    <Wrapper>
-      <Card
-        cardStyle={{
-          justifyContent: "center",
-          padding: 8,
-          backgroundColor: color.blue300,
-        }}
-      >
-        <Row>
-          {showImage ? (
-            <ImageBackground source={NO_IMAGE}>
-              <Avatar source={{ uri: getImage(`${imageName}.png`) }} />
-            </ImageBackground>
-          ) : (
-            <Placeholder />
-          )}
-          <Info>
-            <Line>{content.name}</Line>
-            <Line>{content.description}</Line>
-          </Info>
-        </Row>
-      </Card>
-    </Wrapper>
+    <Card
+      cardStyle={{
+        justifyContent: "center",
+        padding: 8,
+        backgroundColor: color.blue300,
+      }}
+    >
+      <Row>
+        {showImage ? (
+          <ImageBackground source={NO_IMAGE}>
+            <Avatar source={{ uri: getImage(`${imageName}.png`) }} />
+          </ImageBackground>
+        ) : (
+          <Placeholder />
+        )}
+        <Info>
+          <Line>{content.name}</Line>
+          <Line>{content.description}</Line>
+        </Info>
+      </Row>
+    </Card>
   )
 }

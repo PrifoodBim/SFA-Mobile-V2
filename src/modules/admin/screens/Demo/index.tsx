@@ -5,18 +5,19 @@ import { Dropdown } from "react-native-element-dropdown"
 import styled from "styled-components/native"
 import { Container, UserCard } from "@/components"
 import SizeBox from "@/components/SizeBox"
-import { color } from "@/constants/theme"
+import { color, spacing } from "@/constants/theme"
 import { query, useQuery } from "@/db"
 import { DemoModel } from "@/db/models/Demo.model"
 import { OptionModel } from "@/db/models/Option.model"
 import { OptionTypeEnum } from "@/types/Option.type"
 import { getImage } from "@/utils/image.utils"
 
-const WIDTH = Dimensions.get("window").width
+// Carousel size: the window minus the standard screen padding.
+const WIDTH = Dimensions.get("window").width - spacing.screen * 2
+const SLIDE_HEIGHT = 400
 
 const SelectWrapper = styled.View`
-  width: 90%;
-  align-self: center;
+  width: 100%;
   margin-top: 12px;
 `
 
@@ -34,15 +35,16 @@ const Empty = styled.View`
 `
 
 const Slide = styled.View`
-  width: 100%;
-  height: 100%;
-  justify-content: flex-start;
+  width: ${WIDTH}px;
+  height: ${SLIDE_HEIGHT}px;
+  justify-content: center;
   align-items: center;
 `
 
+// Fills the slide; "contain" scales any image size to fit and centers it.
 const SlideImage = styled.Image`
-  width: ${WIDTH}px;
-  height: 400px;
+  width: 100%;
+  height: 100%;
 `
 
 const EmptyText = styled.Text``
@@ -66,16 +68,15 @@ export default function Demo() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <UserCard />
       <SelectWrapper>
         <SelectTitle>Please Select</SelectTitle>
         <SizeBox height={10} />
         <Dropdown
           style={{
-            width: 325,
+            width: "100%",
             height: 40,
-            alignSelf: "center",
             paddingHorizontal: 12,
             borderWidth: 1,
             borderRadius: 8,
@@ -99,12 +100,17 @@ export default function Demo() {
           <EmptyText>No Item For This Option</EmptyText>
         </Empty>
       ) : (
-        <Carousel showsControls={false} loop>
+        <Carousel
+          showsControls={false}
+          loop
+          width={WIDTH}
+          height={SLIDE_HEIGHT}
+        >
           {imageFileIds.map((item, index) => (
             <Slide key={index}>
               <SlideImage
                 source={{ uri: getImage(item + ".png") }}
-                resizeMode="center"
+                resizeMode="contain"
               />
             </Slide>
           ))}

@@ -1,14 +1,14 @@
 import { router } from "expo-router"
 import Carousel from "pinar"
 import { useState } from "react"
-import { Dimensions, Image } from "react-native"
+import { Dimensions } from "react-native"
 import { Dropdown } from "react-native-element-dropdown"
 import styled from "styled-components/native"
 import { UserCard } from "@/components"
 import Button from "@/components/Button"
 import Container from "@/components/Container"
 import { Route } from "@/constants/routes"
-import { color } from "@/constants/theme"
+import { color, spacing } from "@/constants/theme"
 import { query, useQuery } from "@/db"
 import { CustomerModel } from "@/db/models/Customer.model"
 import { OptionModel } from "@/db/models/Option.model"
@@ -24,18 +24,19 @@ type DropDownType = {
   value: string
 }
 
-const WIDTH = Dimensions.get("window").width
+// Carousel size: the window minus the standard screen padding.
+const WIDTH = Dimensions.get("window").width - spacing.screen * 2
+const SLIDE_HEIGHT = 350
 
 const Title = styled.Text`
-  margin-top: 20px;
+  margin-top: 12px;
   text-align: center;
   font-size: 18px;
 `
 
 const DropdownWrapper = styled.View`
-  width: 85%;
+  width: 100%;
   margin-top: 12px;
-  align-self: center;
 `
 
 const Spacer = styled.View`
@@ -52,10 +53,16 @@ const EmptyGuide = styled.View`
 const EmptyText = styled.Text``
 
 const Slide = styled.View`
+  width: ${WIDTH}px;
+  height: ${SLIDE_HEIGHT}px;
+  justify-content: center;
+  align-items: center;
+`
+
+// Fills the slide; "contain" scales any image size to fit and centers it.
+const SlideImage = styled.Image`
   width: 100%;
   height: 100%;
-  justify-content: flex-start;
-  align-items: center;
 `
 
 export default function CustomerPlanogram() {
@@ -147,14 +154,17 @@ export default function CustomerPlanogram() {
           <EmptyText>No Selected Planogram Guide</EmptyText>
         </EmptyGuide>
       ) : (
-        <Carousel showsControls={false} onIndexChanged={handleIndexChange}>
+        <Carousel
+          showsControls={false}
+          width={WIDTH}
+          height={SLIDE_HEIGHT}
+          onIndexChanged={handleIndexChange}
+        >
           {imageFileId.map((item, index) => (
             <Slide key={index}>
-              <Image
+              <SlideImage
                 source={{ uri: getImage(item + ".png") }}
-                width={WIDTH}
-                height={350}
-                resizeMode="center"
+                resizeMode="contain"
               />
             </Slide>
           ))}

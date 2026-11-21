@@ -26,7 +26,6 @@ const MISSING_IMAGES_MESSAGE =
 const Content = styled.View`
   flex: 1;
   margin-top: 12px;
-  padding: 0 12px;
 `
 
 const Empty = styled.View`

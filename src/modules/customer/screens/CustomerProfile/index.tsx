@@ -10,7 +10,6 @@ const Scroll = styled.ScrollView.attrs({
 })``
 
 const Fields = styled.View`
-  padding: 0 30px;
   gap: 4px;
 `
 

@@ -1,7 +1,7 @@
 import { router } from "expo-router"
 import { FlatList } from "react-native"
 import styled from "styled-components/native"
-import { OptionCard, SizeBox, UserCard } from "@/components"
+import { Container, OptionCard, SizeBox, UserCard } from "@/components"
 import useGetCustomer from "@/hooks/useGetCustomer"
 import { alertRequiredModule } from "@/lib/modal"
 import { customerDashboardOption } from "@/modules/customer/constants/customerDashboardOption"
@@ -10,10 +10,6 @@ import { getMissingRequirements } from "@/modules/customer/handlers/transaction.
 import { CustomerOptionType } from "@/modules/customer/types/customerOption.type"
 import { useCustomerVisitContext } from "@/provider/CustomerVisitProvider/CustomerVisitProvider"
 import { useUserContext } from "@/provider/UserProvider/UserProvider"
-
-const Screen = styled.View`
-  flex: 1;
-`
 
 const EmptyOption = styled.View`
   width: 150px;
@@ -72,7 +68,7 @@ export default function CustomerDashboard() {
   }
 
   return (
-    <Screen>
+    <Container background={false}>
       <UserCard
         name={customer?.name}
         description={customer?.code}
@@ -90,6 +86,6 @@ export default function CustomerDashboard() {
         ItemSeparatorComponent={() => <SizeBox height={12} />}
       />
       <SizeBox height={12} />
-    </Screen>
+    </Container>
   )
 }

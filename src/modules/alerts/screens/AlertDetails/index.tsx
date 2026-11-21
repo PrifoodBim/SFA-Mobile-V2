@@ -8,7 +8,7 @@ import { AlertModel } from "@/modules/alerts/models/Alert.model"
 import { dateFormat } from "@/utils/date.utils"
 import { getImage } from "@/utils/image.utils"
 
-const { width, height } = Dimensions.get("window")
+const { height } = Dimensions.get("window")
 
 const Content = styled.View`
   flex: 1;
@@ -16,8 +16,7 @@ const Content = styled.View`
 `
 
 const DetailCard = styled.View`
-  width: 90%;
-  align-self: center;
+  width: 100%;
   margin: 12px 0;
   padding: 12px;
   border-radius: 6px;
@@ -30,7 +29,7 @@ const Title = styled.Text`
 `
 
 const AlertImage = styled.Image`
-  width: ${width * 0.9}px;
+  width: 100%;
   height: ${height * 0.5}px;
   align-self: center;
 `
@@ -60,7 +59,7 @@ export default function AlertDetails() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <Content>
         <UserCard />
         <ScrollView

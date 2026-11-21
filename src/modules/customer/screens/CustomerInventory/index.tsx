@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native"
 import styled from "styled-components/native"
-import { UserCard } from "@/components"
+import { Container, UserCard } from "@/components"
 import { pickDate } from "@/components/CalendarModal"
 import { CONFIRMATION_TRANSACTION, SAVE_RECORD_TEXT } from "@/constants/strings"
 import { createId, insert, useQuery } from "@/db"
@@ -36,10 +36,6 @@ import { OptionTypeEnum } from "@/types/Option.type"
 import { dateFormat, formatDate } from "@/utils/date.utils"
 import { isValidWholePositive } from "@/utils/math.utils"
 import { getProductName } from "@/utils/string.utils"
-
-const Screen = styled.View`
-  flex: 1;
-`
 
 const ListWrapper = styled.View`
   flex: 1;
@@ -222,7 +218,7 @@ export default function CustomerInventory() {
   }
 
   return (
-    <Screen>
+    <Container background={false}>
       <UserCard
         name={customer?.name}
         description={customer?.code}
@@ -259,6 +255,6 @@ export default function CustomerInventory() {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </ListWrapper>
-    </Screen>
+    </Container>
   )
 }

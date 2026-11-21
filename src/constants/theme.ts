@@ -26,6 +26,16 @@ export const fontSize = {
   small: 10,
 } as const
 
-export const theme = { color, fontSize }
+/**
+ * Screen spacing standard (matches the Home screen): content sits `screen`
+ * from the left/right edges and `gap` below the header, with `gap` between
+ * stacked sections.
+ */
+export const spacing = {
+  screen: 12,
+  gap: 12,
+} as const
+
+export const theme = { color, fontSize, spacing }
 
 export type AppTheme = typeof theme

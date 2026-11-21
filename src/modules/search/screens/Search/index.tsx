@@ -16,6 +16,10 @@ import { blockIfOtherVisitIncomplete } from "@/modules/customer/handlers/custome
 import { startTransaction } from "@/modules/customer/handlers/transaction.handler"
 import { useUserContext } from "@/provider/UserProvider/UserProvider"
 
+const Screen = styled.View`
+  flex: 1;
+`
+
 const HeaderBar = styled.View`
   width: 100%;
   height: 50px;
@@ -33,7 +37,6 @@ const HeaderTitle = styled.Text`
 
 const SearchWrapper = styled.View`
   width: 100%;
-  padding: 0 30px;
   justify-content: center;
   align-items: center;
 `
@@ -180,57 +183,58 @@ export default function Search() {
   }
 
   return (
-    <Container>
+    <Screen>
+      {/* Full-width header sits outside the padded screen container. */}
       <HeaderBar>
         <HeaderTitle>Search Customer</HeaderTitle>
       </HeaderBar>
-      <UserCard />
-      <SizeBox height={12} />
-      <SearchWrapper>
-        <TextInput
-          label=""
-          placeholder="Search customer"
-          onChangeText={handleChangeSearch}
-          value={searchTerm}
-        />
-      </SearchWrapper>
-      <Actions>
-        <Button
-          title="Find"
-          buttonColor="tertiary"
-          width={150}
-          onPress={handleFind}
-        />
-        <Button
-          title="Cancel"
-          buttonColor="danger"
-          width={150}
-          onPress={() => router.back()}
-        />
-      </Actions>
+      <Container>
+        <UserCard />
+        <SizeBox height={12} />
+        <SearchWrapper>
+          <TextInput
+            label=""
+            placeholder="Search customer"
+            onChangeText={handleChangeSearch}
+            value={searchTerm}
+          />
+        </SearchWrapper>
+        <Actions>
+          <Button
+            title="Find"
+            buttonColor="tertiary"
+            width={150}
+            onPress={handleFind}
+          />
+          <Button
+            title="Cancel"
+            buttonColor="danger"
+            width={150}
+            onPress={() => router.back()}
+          />
+        </Actions>
 
-      <FlatList
-        data={customers}
-        keyExtractor={item => item.code}
-        renderItem={({ item }) => (
-          <Card
-            isPressable
-            cardStyle={{ paddingVertical: 16, paddingHorizontal: 12 }}
-            onPress={() => handleSelectCustomer(item)}
-          >
-            <CustomerName>{item.name?.toUpperCase()}</CustomerName>
-            <CustomerCode>{item.code.toUpperCase()}</CustomerCode>
-          </Card>
-        )}
-        style={{
-          width: "90%",
-          alignSelf: "center",
-          marginVertical: 12,
-          backgroundColor: "transparent",
-        }}
-        ItemSeparatorComponent={() => <SizeBox height={12} />}
-        showsVerticalScrollIndicator={false}
-      />
-    </Container>
+        <FlatList
+          data={customers}
+          keyExtractor={item => item.code}
+          renderItem={({ item }) => (
+            <Card
+              isPressable
+              cardStyle={{ paddingVertical: 16, paddingHorizontal: 12 }}
+              onPress={() => handleSelectCustomer(item)}
+            >
+              <CustomerName>{item.name?.toUpperCase()}</CustomerName>
+              <CustomerCode>{item.code.toUpperCase()}</CustomerCode>
+            </Card>
+          )}
+          style={{
+            marginVertical: 12,
+            backgroundColor: "transparent",
+          }}
+          ItemSeparatorComponent={() => <SizeBox height={12} />}
+          showsVerticalScrollIndicator={false}
+        />
+      </Container>
+    </Screen>
   )
 }

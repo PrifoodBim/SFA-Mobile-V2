@@ -2,10 +2,10 @@ import NetInfo from "@react-native-community/netinfo"
 import { isAxiosError } from "axios"
 import { router } from "expo-router"
 import { useState } from "react"
-import { ScrollView } from "react-native"
+import { ScrollView, useWindowDimensions } from "react-native"
 import styled from "styled-components/native"
 import { Button, Container, PasswordInput, UserCard } from "@/components"
-import { color } from "@/constants/theme"
+import { color, spacing } from "@/constants/theme"
 import { alert } from "@/lib/modal"
 import { changePassword } from "@/services/account.service"
 
@@ -25,12 +25,24 @@ const Fields = styled.View`
   gap: 8px;
   margin-top: 12px;
   width: 100%;
-  padding: 0 30px;
 `
 
 const labelStyle = { color: color.black }
 
+const BUTTON_WIDTH = 150
+
+/**
+ * Side inset that lines the fields up with the outer edges of the SAVE and
+ * CANCEL buttons (two fixed-width buttons spaced evenly across the row).
+ */
+function useButtonRowInset() {
+  const { width } = useWindowDimensions()
+  const rowWidth = width - spacing.screen * 2
+  return Math.max(0, (rowWidth - BUTTON_WIDTH * 2) / 3)
+}
+
 export default function ChangePassword() {
+  const fieldsInset = useButtonRowInset()
   const [currentPassword, setCurrentPassword] = useState<string>("")
   const [newPassword, setNewPassword] = useState<string>("")
   const [confirmPassword, setConfirmPassword] = useState<string>("")
@@ -102,25 +114,25 @@ export default function ChangePassword() {
   }
 
   return (
-    <Container padding={10}>
+    <Container>
       <UserCard />
       <Actions>
         <Button
           title="SAVE"
           buttonColor="primary"
-          width={150}
+          width={BUTTON_WIDTH}
           onPress={handleSubmit}
         />
         <Button
           title="CANCEL"
           buttonColor="danger"
-          width={150}
+          width={BUTTON_WIDTH}
           onPress={() => router.back()}
         />
       </Actions>
       <ScrollView>
         <Title>Change Password</Title>
-        <Fields>
+        <Fields style={{ paddingHorizontal: fieldsInset }}>
           <PasswordInput
             label="Current Password"
             labelStyle={labelStyle}

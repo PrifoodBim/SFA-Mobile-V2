@@ -39,7 +39,6 @@ const Scroll = styled.ScrollView.attrs({
 const Form = styled.View`
   flex: 1;
   margin: 12px 0;
-  padding: 0 30px;
   gap: 8px;
 `
 
