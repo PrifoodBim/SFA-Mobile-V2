@@ -1,23 +1,40 @@
 {
   "expo": {
-    "name": "prifoodv2",
-    "slug": "prifoodv2",
+    "name": "PriFoodMobile",
+    "slug": "sfa-mobile",
+    "owner": "bimsauco-project",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "prifoodv2",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.prifoodmobile"
     },
     "android": {
+      "package": "com.prifoodmobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "softwareKeyboardLayoutMode": "resize",
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCA0NLxWPWEEcsyBZMZs1G1JJtPd0r6LfY"
+        }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "static",
@@ -28,15 +45,41 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 200
         }
-      ]
+      ],
+      "expo-sqlite",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "PriFood uses your location to log customer visits."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "PriFood uses the camera to capture photos for customer transactions.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "48c17bdd-bfb5-4f0c-bf75-38463225fb0e"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/48c17bdd-bfb5-4f0c-bf75-38463225fb0e",
+      "checkAutomatically": "ON_ERROR_RECOVERY"
     }
   }
 }

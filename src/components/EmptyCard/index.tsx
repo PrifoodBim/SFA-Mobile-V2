@@ -1,0 +1,17 @@
+import styled from "styled-components/native"
+
+type Props = {
+  width?: number
+  height?: number
+}
+
+const Empty = styled.View<{ $width: number; $height: number }>`
+  width: ${props => props.$width}px;
+  height: ${props => props.$height}px;
+`
+
+/** Invisible placeholder that keeps grid cells aligned. */
+export default function EmptyCard(props: Readonly<Props>) {
+  const { width = 0, height = 0 } = props
+  return <Empty $width={width} $height={height} />
+}
