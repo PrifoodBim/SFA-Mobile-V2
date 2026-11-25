@@ -1,7 +1,8 @@
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { isAxiosError } from "axios"
 import { router, useLocalSearchParams } from "expo-router"
 import { useState } from "react"
-import { ScrollView } from "react-native"
+import { KeyboardAvoidingView, ScrollView } from "react-native"
 import { Button, PasswordInput, TextInput } from "@/components"
 import { FORGOT_PASSWORD_BG, LOGO } from "@/constants/images"
 import { Route } from "@/constants/routes"
@@ -24,6 +25,7 @@ import {
 import { changeForgotPassword } from "@/services/account.service"
 
 export default function ForgotChangePassword() {
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const { email } = useLocalSearchParams<{ email?: string }>()
   const isKeyboardVisible = useKeyboardVisible()
   const [password, setPassword] = useState<string>("")
@@ -88,47 +90,49 @@ export default function ForgotChangePassword() {
 
   return (
     <Background source={FORGOT_PASSWORD_BG}>
-      <ScrollView>
-        <LogoWrapper>
-          <Logo source={LOGO} resizeMode="contain" />
-        </LogoWrapper>
-        <Content>
-          <Title>Reset Password</Title>
-          <Subtitle>Enter your new password.</Subtitle>
-          <Fields $gap={20}>
-            <PasswordInput
-              labelStyle={authLabelStyle}
-              label="New Password"
-              value={password}
-              errorText={passwordError}
-              onChangeText={setPassword}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <ScrollView {...keyboardScroll}>
+          <LogoWrapper>
+            <Logo source={LOGO} resizeMode="contain" />
+          </LogoWrapper>
+          <Content>
+            <Title>Reset Password</Title>
+            <Subtitle>Enter your new password.</Subtitle>
+            <Fields $gap={20}>
+              <PasswordInput
+                labelStyle={authLabelStyle}
+                label="New Password"
+                value={password}
+                errorText={passwordError}
+                onChangeText={setPassword}
+              />
+              <PasswordInput
+                labelStyle={authLabelStyle}
+                label="Confirm Password"
+                value={confirmPassword}
+                errorText={confirmPasswordError}
+                onChangeText={setConfirmPassword}
+              />
+              <TextInput
+                labelStyle={authLabelStyle}
+                label="Reset Code"
+                value={code}
+                errorText={codeError}
+                onChangeText={setCode}
+              />
+            </Fields>
+            <Button
+              title="Reset"
+              width={100}
+              buttonStyle={{ marginTop: 20, alignSelf: "center" }}
+              onPress={handleSubmit}
             />
-            <PasswordInput
-              labelStyle={authLabelStyle}
-              label="Confirm Password"
-              value={confirmPassword}
-              errorText={confirmPasswordError}
-              onChangeText={setConfirmPassword}
-            />
-            <TextInput
-              labelStyle={authLabelStyle}
-              label="Reset Code"
-              value={code}
-              errorText={codeError}
-              onChangeText={setCode}
-            />
-          </Fields>
-          <Button
-            title="Reset"
-            width={100}
-            buttonStyle={{ marginTop: 20, alignSelf: "center" }}
-            onPress={handleSubmit}
-          />
-          <LinkButton onPress={() => router.back()}>
-            <LinkText>Back</LinkText>
-          </LinkButton>
-        </Content>
-      </ScrollView>
+            <LinkButton onPress={() => router.back()}>
+              <LinkText>Back</LinkText>
+            </LinkButton>
+          </Content>
+        </ScrollView>
+      </KeyboardAvoidingView>
       {!isKeyboardVisible && (
         <AuthFooter buildColor={color.gold} isSpaced={false} />
       )}

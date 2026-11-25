@@ -1,10 +1,10 @@
+import { useHeaderHeight } from "expo-router/react-navigation"
 import { router } from "expo-router"
 import { useState } from "react"
 import {
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableWithoutFeedback,
   View,
@@ -27,7 +27,7 @@ import {
   buildItemProducts,
   setItemQuantity,
 } from "@/modules/customer/hooks/buildItemProducts"
-import useKeyboardVisible from "@/hooks/useKeyboardVisible"
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { InventoryModel } from "@/modules/customer/models/Inventory.model"
 import { ItemProduct } from "@/modules/customer/types/ProductItemProvider.type"
 import { useCustomerVisitContext } from "@/provider/CustomerVisitProvider/CustomerVisitProvider"
@@ -58,7 +58,8 @@ const NoteValue = styled.Text`
 export default function CustomerInventory() {
   const { userId } = useUserContext()
   const { selectedCustomer } = useCustomerVisitContext()
-  const isKeyboardVisible = useKeyboardVisible()
+  const headerHeight = useHeaderHeight()
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const customerCode = selectedCustomer ?? ""
 
   const customer = useQuery(CustomerModel, { where: { code: customerCode } })[0]
@@ -107,6 +108,7 @@ export default function CustomerInventory() {
   }
 
   async function handleSave() {
+    Keyboard.dismiss()
     const itemCount = itemProduct.filter(val => val.quantity !== "")
 
     if (itemCount.length < 1) {
@@ -218,25 +220,29 @@ export default function CustomerInventory() {
   }
 
   return (
-    <Container background={false}>
-      <UserCard
-        name={customer?.name}
-        description={customer?.code}
-        isCurrentUserInfo={false}
-      />
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
+      style={{ flex: 1 }}
+    >
+      <Container background={false}>
+        <UserCard
+          name={customer?.name}
+          description={customer?.code}
+          isCurrentUserInfo={false}
+        />
 
-      {!isKeyboardVisible && (
+        {/* Always shown: hiding it while typing made the list jump. */}
         <SaveCancelButtons onSave={handleSave} onCancel={() => router.back()} />
-      )}
 
-      <ListWrapper>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
+        <ListWrapper>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
+              {...keyboardScroll}
+              contentContainerStyle={[
+                { flexGrow: 1 },
+                keyboardScroll.contentContainerStyle,
+              ]}
               showsHorizontalScrollIndicator={false}
               showsVerticalScrollIndicator={false}
             >
@@ -253,8 +259,8 @@ export default function CustomerInventory() {
               />
             </ScrollView>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </ListWrapper>
-    </Container>
+        </ListWrapper>
+      </Container>
+    </KeyboardAvoidingView>
   )
 }

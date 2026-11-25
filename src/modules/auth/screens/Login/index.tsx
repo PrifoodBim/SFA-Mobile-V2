@@ -1,3 +1,4 @@
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { Button, PasswordInput, TextInput } from "@/components"
 import { LOGIN_BACKGROUND, LOGO } from "@/constants/images"
 import { Route } from "@/constants/routes"
@@ -23,9 +24,10 @@ import {
 import { getDataFromStorage, KEY } from "@/utils/storage.utils"
 import { useNetInfo } from "@react-native-community/netinfo"
 import { router } from "expo-router"
-import { ScrollView } from "react-native"
+import { KeyboardAvoidingView, ScrollView } from "react-native"
 
 export default function Login() {
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const { isConnected } = useNetInfo()
   const isKeyboardVisible = useKeyboardVisible()
   const { getLocation } = useGetUserLocation()
@@ -103,42 +105,44 @@ export default function Login() {
 
   return (
     <Background source={LOGIN_BACKGROUND}>
-      <ScrollView>
-        <LogoWrapper>
-          <Logo source={LOGO} resizeMode="contain" />
-        </LogoWrapper>
-        <Content>
-          <Title>Sales Force Automation</Title>
-          <Subtitle>Enter your credentials to start using this app</Subtitle>
-          <Fields $gap={12}>
-            <TextInput
-              errorText={emailError}
-              onChangeText={setEmail}
-              labelStyle={authLabelStyle}
-              label="User ID"
-              placeholder="Enter User ID"
-              value={email}
-            />
-            <PasswordInput
-              errorText={passwordError}
-              onChangeText={setPassword}
-              labelStyle={authLabelStyle}
-              label="Password"
-              placeholder="Enter Password"
-              value={password}
-            />
-          </Fields>
-        </Content>
-        <Button
-          title="Sign in"
-          width={100}
-          onPress={handleSignIn}
-          buttonStyle={{ marginTop: 20, alignSelf: "center" }}
-        />
-        <LinkButton onPress={() => router.push(Route.FORGOT_PASSWORD)}>
-          <LinkText>Forgot Password?</LinkText>
-        </LinkButton>
-      </ScrollView>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <ScrollView {...keyboardScroll}>
+          <LogoWrapper>
+            <Logo source={LOGO} resizeMode="contain" />
+          </LogoWrapper>
+          <Content>
+            <Title>Sales Force Automation</Title>
+            <Subtitle>Enter your credentials to start using this app</Subtitle>
+            <Fields $gap={12}>
+              <TextInput
+                errorText={emailError}
+                onChangeText={setEmail}
+                labelStyle={authLabelStyle}
+                label="User ID"
+                placeholder="Enter User ID"
+                value={email}
+              />
+              <PasswordInput
+                errorText={passwordError}
+                onChangeText={setPassword}
+                labelStyle={authLabelStyle}
+                label="Password"
+                placeholder="Enter Password"
+                value={password}
+              />
+            </Fields>
+          </Content>
+          <Button
+            title="Sign in"
+            width={100}
+            onPress={handleSignIn}
+            buttonStyle={{ marginTop: 20, alignSelf: "center" }}
+          />
+          <LinkButton onPress={() => router.push(Route.FORGOT_PASSWORD)}>
+            <LinkText>Forgot Password?</LinkText>
+          </LinkButton>
+        </ScrollView>
+      </KeyboardAvoidingView>
       {!isKeyboardVisible && (
         <AuthFooter isFloating buildColor={color.yellow400} />
       )}

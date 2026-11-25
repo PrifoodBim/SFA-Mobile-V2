@@ -1,6 +1,6 @@
 import { router } from "expo-router"
 import Checkbox from "expo-checkbox"
-import { useEffect, useState } from "react"
+import { Keyboard } from "react-native"
 import styled from "styled-components/native"
 import { pickDate } from "@/components/CalendarModal"
 import { CALENDAR_ICON, NO_IMAGE } from "@/constants/images"
@@ -141,28 +141,32 @@ export default function ProductItem(props: Readonly<Props>) {
     calendarTitle,
     onDateChange,
   } = props
-  const [amount, setAmount] = useState<string>(item.quantity ?? "")
-
-  useEffect(() => {
-    setAmount(item.quantity ?? "")
-  }, [item.quantity])
+  const amount = item.quantity ?? ""
 
   const image = imageCode ? getImage(imageCode + ".png") : undefined
 
   async function handleCalendar() {
+    Keyboard.dismiss()
     const date = await pickDate({ title: calendarTitle ?? "Select Date" })
     onDateChange?.(item._id, date)
   }
 
-  function submitAmount() {
-    onChangeText?.(item._id, amount)
+  // Report every change right away: the Save button stays visible while
+  // typing, so it must never read a value that is still only in this field.
+  function changeAmount(text: string) {
+    onChangeText?.(item._id, text)
   }
 
   return (
     <Wrapper>
       <Card>
         {image ? (
-          <ImageButton onPress={() => openImagePreview(image)}>
+          <ImageButton
+            onPress={() => {
+              Keyboard.dismiss()
+              openImagePreview(image)
+            }}
+          >
             <Thumbnail source={{ uri: image }} resizeMode="center" />
           </ImageButton>
         ) : (
@@ -190,9 +194,7 @@ export default function ProductItem(props: Readonly<Props>) {
                 placeholder={placeHolder ?? ""}
                 value={amount}
                 keyboardType="number-pad"
-                onChangeText={setAmount}
-                onSubmitEditing={submitAmount}
-                onBlur={submitAmount}
+                onChangeText={changeAmount}
               />
               {isAllowOpenCalendar && (
                 <CalendarButton onPress={handleCalendar}>

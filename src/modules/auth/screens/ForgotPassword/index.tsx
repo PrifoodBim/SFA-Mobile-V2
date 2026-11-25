@@ -1,7 +1,8 @@
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { isAxiosError } from "axios"
 import { router } from "expo-router"
 import { useState } from "react"
-import { ScrollView } from "react-native"
+import { KeyboardAvoidingView, ScrollView } from "react-native"
 import { Button, TextInput } from "@/components"
 import { FORGOT_PASSWORD_BG, LOGO } from "@/constants/images"
 import { Route } from "@/constants/routes"
@@ -27,6 +28,7 @@ const EMAIL_PATTERN =
   /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 export default function ForgotPassword() {
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const isKeyboardVisible = useKeyboardVisible()
   const [email, setEmail] = useState<string>("")
   const [confirmEmail, setConfirmEmail] = useState<string>("")
@@ -108,41 +110,43 @@ export default function ForgotPassword() {
 
   return (
     <Background source={FORGOT_PASSWORD_BG}>
-      <ScrollView>
-        <LogoWrapper>
-          <Logo source={LOGO} resizeMode="contain" />
-        </LogoWrapper>
-        <Content>
-          <Title>Forgot Password?</Title>
-          <Subtitle>Enter your registered email address.</Subtitle>
-          <Fields $gap={20}>
-            <TextInput
-              labelStyle={authLabelStyle}
-              label="Email"
-              value={email}
-              onChangeText={handleChangeEmail}
-              errorText={emailError}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <ScrollView {...keyboardScroll}>
+          <LogoWrapper>
+            <Logo source={LOGO} resizeMode="contain" />
+          </LogoWrapper>
+          <Content>
+            <Title>Forgot Password?</Title>
+            <Subtitle>Enter your registered email address.</Subtitle>
+            <Fields $gap={20}>
+              <TextInput
+                labelStyle={authLabelStyle}
+                label="Email"
+                value={email}
+                onChangeText={handleChangeEmail}
+                errorText={emailError}
+              />
+              <TextInput
+                labelStyle={authLabelStyle}
+                label="Confirm Email"
+                value={confirmEmail}
+                onChangeText={handleChangeConfirmEmail}
+                errorText={confirmEmailError}
+              />
+            </Fields>
+            <Button
+              title="Send"
+              width={100}
+              disabled={isLoading}
+              buttonStyle={{ marginTop: 32, alignSelf: "center" }}
+              onPress={handleSubmit}
             />
-            <TextInput
-              labelStyle={authLabelStyle}
-              label="Confirm Email"
-              value={confirmEmail}
-              onChangeText={handleChangeConfirmEmail}
-              errorText={confirmEmailError}
-            />
-          </Fields>
-          <Button
-            title="Send"
-            width={100}
-            disabled={isLoading}
-            buttonStyle={{ marginTop: 32, alignSelf: "center" }}
-            onPress={handleSubmit}
-          />
-          <LinkButton onPress={() => router.back()}>
-            <LinkText>Back</LinkText>
-          </LinkButton>
-        </Content>
-      </ScrollView>
+            <LinkButton onPress={() => router.back()}>
+              <LinkText>Back</LinkText>
+            </LinkButton>
+          </Content>
+        </ScrollView>
+      </KeyboardAvoidingView>
       {!isKeyboardVisible && <AuthFooter buildColor={color.gold} />}
     </Background>
   )

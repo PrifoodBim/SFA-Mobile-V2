@@ -1,9 +1,9 @@
+import { useHeaderHeight } from "expo-router/react-navigation"
 import { router } from "expo-router"
 import {
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableWithoutFeedback,
 } from "react-native"
@@ -19,7 +19,7 @@ import { alert, confirm } from "@/lib/modal"
 import ProductItem from "@/modules/customer/components/ProductItem"
 import SaveCancelButtons from "@/modules/customer/components/SaveCancelButtons"
 import useHandleOsaData from "@/modules/customer/hooks/useHandleOsaData"
-import useKeyboardVisible from "@/hooks/useKeyboardVisible"
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { ItemProduct } from "@/modules/customer/types/ProductItemProvider.type"
 import { useCustomerVisitContext } from "@/provider/CustomerVisitProvider/CustomerVisitProvider"
 import { useUserContext } from "@/provider/UserProvider/UserProvider"
@@ -51,7 +51,8 @@ const NoteValue = styled.Text`
 export default function CustomerOsa() {
   const { selectedCustomer } = useCustomerVisitContext()
   const { userId } = useUserContext()
-  const isKeyboardVisible = useKeyboardVisible()
+  const headerHeight = useHeaderHeight()
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const customerCode = selectedCustomer ?? ""
 
   const customer = useQuery(CustomerModel, { where: { code: customerCode } })[0]
@@ -127,7 +128,8 @@ export default function CustomerOsa() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
       style={{ flex: 1 }}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -137,19 +139,22 @@ export default function CustomerOsa() {
             description={customer?.code}
             isCurrentUserInfo={false}
           />
-          {!isKeyboardVisible && (
-            <SaveCancelButtons
-              onSave={() => {
-                Keyboard.dismiss()
-                handleSave()
-              }}
-              onCancel={() => router.back()}
-            />
-          )}
+          {/* Always shown: hiding it while typing made the list jump. */}
+          <SaveCancelButtons
+            onSave={() => {
+              Keyboard.dismiss()
+              handleSave()
+            }}
+            onCancel={() => router.back()}
+          />
 
           <ListWrapper>
             <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
+              {...keyboardScroll}
+              contentContainerStyle={[
+                { flexGrow: 1 },
+                keyboardScroll.contentContainerStyle,
+              ]}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
             >

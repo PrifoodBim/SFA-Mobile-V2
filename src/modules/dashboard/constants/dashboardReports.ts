@@ -20,7 +20,7 @@ export type DashboardReportType = {
 export const DASHBOARD_REPORTS: DashboardReportType[] = [
   {
     icon: KPI_ICONS.target,
-    description: "Annual",
+    description: "Year-to-Date",
     type: "TARGET",
     color: "#6F42C1",
     key: "ytdTarget",

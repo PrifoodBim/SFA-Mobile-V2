@@ -1,8 +1,14 @@
+import { useHeaderHeight } from "expo-router/react-navigation"
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import NetInfo from "@react-native-community/netinfo"
 import { isAxiosError } from "axios"
 import { router } from "expo-router"
 import { useState } from "react"
-import { ScrollView, useWindowDimensions } from "react-native"
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native"
 import styled from "styled-components/native"
 import { Button, Container, PasswordInput, UserCard } from "@/components"
 import { color, spacing } from "@/constants/theme"
@@ -43,6 +49,8 @@ function useButtonRowInset() {
 
 export default function ChangePassword() {
   const fieldsInset = useButtonRowInset()
+  const headerHeight = useHeaderHeight()
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const [currentPassword, setCurrentPassword] = useState<string>("")
   const [newPassword, setNewPassword] = useState<string>("")
   const [confirmPassword, setConfirmPassword] = useState<string>("")
@@ -114,48 +122,54 @@ export default function ChangePassword() {
   }
 
   return (
-    <Container>
-      <UserCard />
-      <Actions>
-        <Button
-          title="SAVE"
-          buttonColor="primary"
-          width={BUTTON_WIDTH}
-          onPress={handleSubmit}
-        />
-        <Button
-          title="CANCEL"
-          buttonColor="danger"
-          width={BUTTON_WIDTH}
-          onPress={() => router.back()}
-        />
-      </Actions>
-      <ScrollView>
-        <Title>Change Password</Title>
-        <Fields style={{ paddingHorizontal: fieldsInset }}>
-          <PasswordInput
-            label="Current Password"
-            labelStyle={labelStyle}
-            value={currentPassword}
-            onChangeText={handleChange(setCurrentPassword)}
-            errorText={currentPasswordError}
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
+      style={{ flex: 1 }}
+    >
+      <Container>
+        <UserCard />
+        <Actions>
+          <Button
+            title="SAVE"
+            buttonColor="primary"
+            width={BUTTON_WIDTH}
+            onPress={handleSubmit}
           />
-          <PasswordInput
-            label="New Password"
-            labelStyle={labelStyle}
-            value={newPassword}
-            onChangeText={handleChange(setNewPassword)}
-            errorText={newPasswordError}
+          <Button
+            title="CANCEL"
+            buttonColor="danger"
+            width={BUTTON_WIDTH}
+            onPress={() => router.back()}
           />
-          <PasswordInput
-            label="Confirm Password"
-            labelStyle={labelStyle}
-            value={confirmPassword}
-            onChangeText={handleChange(setConfirmPassword)}
-            errorText={confirmPasswordError}
-          />
-        </Fields>
-      </ScrollView>
-    </Container>
+        </Actions>
+        <ScrollView {...keyboardScroll}>
+          <Title>Change Password</Title>
+          <Fields style={{ paddingHorizontal: fieldsInset }}>
+            <PasswordInput
+              label="Current Password"
+              labelStyle={labelStyle}
+              value={currentPassword}
+              onChangeText={handleChange(setCurrentPassword)}
+              errorText={currentPasswordError}
+            />
+            <PasswordInput
+              label="New Password"
+              labelStyle={labelStyle}
+              value={newPassword}
+              onChangeText={handleChange(setNewPassword)}
+              errorText={newPasswordError}
+            />
+            <PasswordInput
+              label="Confirm Password"
+              labelStyle={labelStyle}
+              value={confirmPassword}
+              onChangeText={handleChange(setConfirmPassword)}
+              errorText={confirmPasswordError}
+            />
+          </Fields>
+        </ScrollView>
+      </Container>
+    </KeyboardAvoidingView>
   )
 }

@@ -1,9 +1,9 @@
+import { useHeaderHeight } from "expo-router/react-navigation"
 import { router } from "expo-router"
 import {
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableWithoutFeedback,
 } from "react-native"
@@ -20,7 +20,7 @@ import { confirm } from "@/lib/modal"
 import ProductItem from "@/modules/customer/components/ProductItem"
 import SaveCancelButtons from "@/modules/customer/components/SaveCancelButtons"
 import useHandleDeliveryData from "@/modules/customer/hooks/useHandleDeliveryData"
-import useKeyboardVisible from "@/hooks/useKeyboardVisible"
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { ItemProduct } from "@/modules/customer/types/ProductItemProvider.type"
 import { useCustomerVisitContext } from "@/provider/CustomerVisitProvider/CustomerVisitProvider"
 import { useUserContext } from "@/provider/UserProvider/UserProvider"
@@ -42,7 +42,8 @@ const BottomSpace = styled.View`
 export default function CustomerDelivery() {
   const { selectedCustomer } = useCustomerVisitContext()
   const { userId } = useUserContext()
-  const isKeyboardVisible = useKeyboardVisible()
+  const headerHeight = useHeaderHeight()
+  const keyboardScroll = useScrollToFocusedInput({ align: "nearest" })
   const customerCode = selectedCustomer ?? ""
 
   const customer = useQuery(CustomerModel, { where: { code: customerCode } })[0]
@@ -95,23 +96,27 @@ export default function CustomerDelivery() {
   }
 
   return (
-    <Container>
-      <UserCard
-        name={customer?.name}
-        description={customer?.code}
-        isCurrentUserInfo={false}
-      />
-      {!isKeyboardVisible && (
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
+      style={{ flex: 1 }}
+    >
+      <Container>
+        <UserCard
+          name={customer?.name}
+          description={customer?.code}
+          isCurrentUserInfo={false}
+        />
+        {/* Always shown: hiding it while typing made the list jump. */}
         <SaveCancelButtons onSave={handleSave} onCancel={() => router.back()} />
-      )}
-      <ListWrapper>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
+        <ListWrapper>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
+              {...keyboardScroll}
+              contentContainerStyle={[
+                { flexGrow: 1 },
+                keyboardScroll.contentContainerStyle,
+              ]}
               showsHorizontalScrollIndicator={false}
               showsVerticalScrollIndicator={false}
             >
@@ -128,9 +133,9 @@ export default function CustomerDelivery() {
               />
             </ScrollView>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </ListWrapper>
-      <BottomSpace />
-    </Container>
+        </ListWrapper>
+        <BottomSpace />
+      </Container>
+    </KeyboardAvoidingView>
   )
 }
