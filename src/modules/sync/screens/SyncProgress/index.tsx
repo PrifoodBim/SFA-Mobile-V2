@@ -73,9 +73,9 @@ const SYNC_STEPS: SyncStep[] = [
   },
   { name: "Dashboard", run: ({ setError }) => syncDashboardToServer(setError) },
   { name: "Customer KPI", run: ({ setError }) => syncKpiData(setError) },
-  { name: "DAR info", run: ({ setError }) => syncDarInfoFromServer(setError) },
+  { name: "DSR info", run: ({ setError }) => syncDarInfoFromServer(setError) },
   {
-    name: "DAR upload",
+    name: "DSR upload",
     run: ({ setError }) => syncDarUploadToServer(setError),
   },
   { name: "MCP logs", run: ({ setError }) => sendAndGetMcpLogs(setError) },

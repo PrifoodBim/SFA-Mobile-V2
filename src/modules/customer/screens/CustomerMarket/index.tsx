@@ -1,8 +1,10 @@
 import { router } from "expo-router"
 import { useEffect, useState } from "react"
-import { ScrollView } from "react-native"
+import { useHeaderHeight } from "expo-router/react-navigation"
+import { KeyboardAvoidingView, ScrollView } from "react-native"
 import styled from "styled-components/native"
 import { TextInput, UserCard } from "@/components"
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import Button from "@/components/Button"
 import Container from "@/components/Container"
 import { Route } from "@/constants/routes"
@@ -16,6 +18,8 @@ import { MaterialIcon } from "@/types/icon.enum"
 import * as S from "./styles"
 
 export default function CustomerMarket() {
+  const headerHeight = useHeaderHeight()
+  const keyboardScroll = useScrollToFocusedInput()
   const { selectedCustomer, photos, setPhotos } = useCustomerVisitContext()
   const { userId } = useUserContext()
 
@@ -122,117 +126,124 @@ export default function CustomerMarket() {
   }
 
   return (
-    <Container>
-      <UserCard />
-      <S.ActionRow>
-        <Button
-          buttonColor="primary"
-          width={150}
-          icon={MaterialIcon.SAVE}
-          title="SAVE"
-          onPress={handleSave}
-        />
-        <Button
-          buttonColor="danger"
-          width={150}
-          icon={MaterialIcon.SAVE}
-          title="CANCEL"
-          onPress={() => router.back()}
-        />
-      </S.ActionRow>
-      <ScrollView
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-      >
-        <S.Form>
-          <S.Fields>
-            <TextInput
-              label="Title"
-              value={title}
-              onChangeText={text => {
-                setTitle(text)
-                setErrorTitle("")
-              }}
-              errorText={errorTitle}
-              maxLength={50}
-            />
-            <TextInput
-              label="Brand"
-              value={brand}
-              maxLength={50}
-              onChangeText={text => {
-                setBrand(text)
-                setErrorBrand("")
-              }}
-              errorText={errorBrand}
-            />
-            <TextInput
-              placeholder=""
-              label="Scheme"
-              maxLength={100}
-              value={scheme}
-              onChangeText={text => {
-                setScheme(text)
-                setErrorScheme("")
-              }}
-              errorText={errorScheme}
-            />
-            <TextInput
-              placeholder=""
-              value={price}
-              onChangeText={text => {
-                setPrice(text)
-                setErrorPrice("")
-              }}
-              label="Price"
-              keyboardType="number-pad"
-              errorText={errorPrice}
-            />
-            <TextInput
-              label="Remarks"
-              value={remarks}
-              onChangeText={text => {
-                setRemarks(text)
-                setErrorRemarks("")
-              }}
-              multiline={true}
-              numberOfLines={2}
-              inputStyle={{ height: 100 }}
-              textAlignVertical="top"
-              errorText={errorRemarks}
-              maxLength={1000}
-            />
-          </S.Fields>
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
+      style={{ flex: 1 }}
+    >
+      <Container>
+        <UserCard />
+        <S.ActionRow>
           <Button
-            icon={MaterialIcon.CAMERA_ALT}
+            buttonColor="primary"
             width={150}
-            buttonStyle={{
-              alignSelf: "center",
-              flexDirection: "row-reverse",
-              backgroundColor: color.gold,
-              marginTop: 16,
-            }}
-            title=" Capture"
-            textStyle={{ color: color.black }}
-            isShowIcon={true}
-            onPress={() =>
-              router.push({
-                pathname: Route.CAMERA,
-                params: { insertInto: "MARKET" },
-              })
-            }
+            icon={MaterialIcon.SAVE}
+            title="SAVE"
+            onPress={handleSave}
           />
-        </S.Form>
-        <S.ImageWrapper>
-          {photos.length > 0 && (
-            <S.Photo
-              source={{ uri: `file://${photos[0].fileName}` }}
-              resizeMode="cover"
+          <Button
+            buttonColor="danger"
+            width={150}
+            icon={MaterialIcon.SAVE}
+            title="CANCEL"
+            onPress={() => router.back()}
+          />
+        </S.ActionRow>
+        <ScrollView
+          {...keyboardScroll}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+        >
+          <S.Form>
+            <S.Fields>
+              <TextInput
+                label="Title"
+                value={title}
+                onChangeText={text => {
+                  setTitle(text)
+                  setErrorTitle("")
+                }}
+                errorText={errorTitle}
+                maxLength={50}
+              />
+              <TextInput
+                label="Brand"
+                value={brand}
+                maxLength={50}
+                onChangeText={text => {
+                  setBrand(text)
+                  setErrorBrand("")
+                }}
+                errorText={errorBrand}
+              />
+              <TextInput
+                placeholder=""
+                label="Scheme"
+                maxLength={100}
+                value={scheme}
+                onChangeText={text => {
+                  setScheme(text)
+                  setErrorScheme("")
+                }}
+                errorText={errorScheme}
+              />
+              <TextInput
+                placeholder=""
+                value={price}
+                onChangeText={text => {
+                  setPrice(text)
+                  setErrorPrice("")
+                }}
+                label="Price"
+                keyboardType="number-pad"
+                errorText={errorPrice}
+              />
+              <TextInput
+                label="Remarks"
+                value={remarks}
+                onChangeText={text => {
+                  setRemarks(text)
+                  setErrorRemarks("")
+                }}
+                multiline={true}
+                numberOfLines={2}
+                inputStyle={{ height: 100 }}
+                textAlignVertical="top"
+                errorText={errorRemarks}
+                maxLength={1000}
+              />
+            </S.Fields>
+            <Button
+              icon={MaterialIcon.CAMERA_ALT}
+              width={150}
+              buttonStyle={{
+                alignSelf: "center",
+                flexDirection: "row-reverse",
+                backgroundColor: color.gold,
+                marginTop: 16,
+              }}
+              title=" Capture"
+              textStyle={{ color: color.black }}
+              isShowIcon={true}
+              onPress={() =>
+                router.push({
+                  pathname: Route.CAMERA,
+                  params: { insertInto: "MARKET" },
+                })
+              }
             />
-          )}
-        </S.ImageWrapper>
-      </ScrollView>
-      <S.BottomSpace />
-    </Container>
+          </S.Form>
+          <S.ImageWrapper>
+            {photos.length > 0 && (
+              <S.Photo
+                source={{ uri: `file://${photos[0].fileName}` }}
+                resizeMode="cover"
+              />
+            )}
+          </S.ImageWrapper>
+        </ScrollView>
+        <S.BottomSpace />
+      </Container>
+    </KeyboardAvoidingView>
   )
 }

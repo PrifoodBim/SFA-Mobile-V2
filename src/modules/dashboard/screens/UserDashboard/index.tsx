@@ -60,6 +60,7 @@ function getValue(item: DashboardReportType, report?: DashboardReport) {
 
 export default function UserDashboard() {
   const report = useQuery(DashboardReportModel)[0]
+  console.log("REPORT", JSON.stringify(report, null, 2))
   const { userData } = useUserContext()
 
   const permissions = userData?.grantedPermissions
@@ -69,7 +70,7 @@ export default function UserDashboard() {
   // Pad to an even count so the last card stays in the left column.
   const reports: (DashboardReportType | null)[] =
     granted.length % 2 === 0 ? granted : [...granted, null]
-
+  console.log("REPORTS", reports)
   return (
     <Container>
       <UserCard />

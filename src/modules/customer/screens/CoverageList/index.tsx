@@ -1,5 +1,5 @@
 import { router } from "expo-router"
-import { FlatList, View } from "react-native"
+import { FlatList } from "react-native"
 import styled from "styled-components/native"
 import { Card, Container, Icon, SizeBox, UserCard } from "@/components"
 import { Route } from "@/constants/routes"
@@ -45,7 +45,13 @@ const ListWrapper = styled.View`
 
 const Row = styled.View`
   flex-direction: row;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+`
+
+// Takes the remaining width so long names wrap instead of running under the check.
+const Info = styled.View`
+  flex: 1;
 `
 
 const CustomerName = styled.Text<{ $visited: boolean }>`
@@ -135,14 +141,14 @@ export default function CoverageList() {
         onPress={() => handleSelect(item)}
       >
         <Row>
-          <View>
+          <Info>
             <CustomerName $visited={isVisited}>
               {item.customerName.toUpperCase()}
             </CustomerName>
             <CustomerCode $visited={isVisited}>
               {item.customerCode.toUpperCase()}
             </CustomerCode>
-          </View>
+          </Info>
           {isVisited && (
             <Icon name={MaterialIcon.CHECK} size={15} color={color.yellow400} />
           )}

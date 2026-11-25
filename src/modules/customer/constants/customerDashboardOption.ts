@@ -87,8 +87,8 @@ export const customerDashboardOption: CustomerOptionType[] = [
   },
   {
     optionId: "02.9",
-    title: "DAR",
-    header: "Daily Activity Report",
+    title: "DSR",
+    header: "Daily Sales Report",
     description: "Visit closing",
     route: Route.CUSTOMER_DAR,
     permissionId: PermissionAccess.Mobile_Customer_DAR,

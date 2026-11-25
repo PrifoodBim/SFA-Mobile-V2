@@ -81,11 +81,11 @@ export const syncDarUploadToServer = async (
     const dataToSync = query(DarModel, { where: { transId: "0" } })
     const failed = await uploadPending(log, dataToSync, handleUploadedDar)
     if (failed > 0) {
-      setError(failedUploadMessage("DAR not sync", failed, dataToSync.length))
+      setError(failedUploadMessage("DSR not sync", failed, dataToSync.length))
     }
   } catch (error) {
     log.error("DAR not sync", error)
-    setError("DAR not sync")
+    setError("DSR not sync")
   }
   return true
 }

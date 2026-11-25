@@ -62,7 +62,7 @@ export const ROUTE_TITLES: Partial<Record<RoutePath, string>> = {
   [Route.CUSTOMER_MARKET]: "02.6 Market",
   [Route.CUSTOMER_NOTES]: "02.7 Notes",
   [Route.CUSTOMER_ORDER]: "02.8 Order",
-  [Route.CUSTOMER_DAR]: "02.9 DAR",
+  [Route.CUSTOMER_DAR]: "02.9 DSR",
   [Route.PASSWORD]: "03 Password",
   [Route.DATA_SYNC]: "04 Data Sync",
   [Route.ADMIN]: "05 Admin",

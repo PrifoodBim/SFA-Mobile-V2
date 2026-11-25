@@ -1,9 +1,12 @@
 import { router } from "expo-router"
+import { useHeaderHeight } from "expo-router/react-navigation"
 import { useState } from "react"
+import { KeyboardAvoidingView } from "react-native"
 import { Container, TextInput, UserCard } from "@/components"
 import { CONFIRMATION_TRANSACTION, SAVE_RECORD_TEXT } from "@/constants/strings"
 import { createId, insert, useQuery } from "@/db"
 import useGetCustomer from "@/hooks/useGetCustomer"
+import useScrollToFocusedInput from "@/hooks/useScrollToFocusedInput"
 import { confirm } from "@/lib/modal"
 import CardValue from "@/modules/customer/components/CardValue"
 import CheckBoxWithValue from "@/modules/customer/components/CheckBoxWithValue"
@@ -39,6 +42,8 @@ function wholeNumberError(field: string) {
 }
 
 export default function CustomerDar() {
+  const headerHeight = useHeaderHeight()
+  const keyboardScroll = useScrollToFocusedInput()
   const { userId } = useUserContext()
   const { selectedCustomer } = useCustomerVisitContext()
   const { customer } = useGetCustomer({
@@ -148,166 +153,175 @@ export default function CustomerDar() {
   }
 
   return (
-    <Container>
-      <UserCard
-        name={customer?.name}
-        description={customer?.code}
-        isCurrentUserInfo={false}
-      />
-      <SaveCancelButtons onSave={handleSubmit} onCancel={() => router.back()} />
-      <Scroll>
-        <Form>
-          <Panel>
-            <PanelTitle>CUSTOMER INFO</PanelTitle>
-            <Row>
-              <CardValue label="CHANNEL">
-                <Value $size={10}>{info?.channel}</Value>
-              </CardValue>
-              <CardValue label="FREQ.">
-                <Value $size={10}>{info?.frequency}</Value>
-              </CardValue>
-              <CardValue label="TERMS">
-                <Value $size={10}>{info?.paymentTerms}</Value>
-              </CardValue>
-            </Row>
-          </Panel>
-          <Panel>
-            <PanelTitle>MONTHLY PERFORMANCE</PanelTitle>
-            <Row>
-              <CardValue label="TARGET">
-                <Value $size={10}>
-                  {formatNegativeNumber(info?.monthlyTarget || 0)}
-                </Value>
-              </CardValue>
-              <CardValue label="ACTUAL">
-                <Value $size={10}>
-                  {formatNegativeNumber(info?.monthlyActual || 0)}
-                </Value>
-              </CardValue>
-              <CardValue label="BALANCE">
-                <Value $size={10}>
-                  {formatNegativeNumber(info?.monthlyBalance || 0)}
-                </Value>
-              </CardValue>
-            </Row>
-          </Panel>
-          <Panel>
-            <PanelTitle>TODAYS PERFORMANCE</PanelTitle>
-            <Row>
-              <CardValue label="TARGET">
-                <Value $size={10}>
-                  {formatNegativeNumber(info?.todaysTarget || 0)}
-                </Value>
-              </CardValue>
-              <InputCell>
-                <TextInput
-                  inputStyle={smallInputStyle}
-                  onChangeText={text => {
-                    setTodayActual(digitsOnly(text))
-                    setActualError("")
-                  }}
-                  keyboardType="numeric"
-                  value={todayActual}
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
+      style={{ flex: 1 }}
+    >
+      <Container>
+        <UserCard
+          name={customer?.name}
+          description={customer?.code}
+          isCurrentUserInfo={false}
+        />
+        <SaveCancelButtons
+          onSave={handleSubmit}
+          onCancel={() => router.back()}
+        />
+        <Scroll {...keyboardScroll}>
+          <Form>
+            <Panel>
+              <PanelTitle>CUSTOMER INFO</PanelTitle>
+              <Row>
+                <CardValue label="CHANNEL">
+                  <Value $size={10}>{info?.channel}</Value>
+                </CardValue>
+                <CardValue label="FREQ.">
+                  <Value $size={10}>{info?.frequency}</Value>
+                </CardValue>
+                <CardValue label="TERMS">
+                  <Value $size={10}>{info?.paymentTerms}</Value>
+                </CardValue>
+              </Row>
+            </Panel>
+            <Panel>
+              <PanelTitle>MONTHLY PERFORMANCE</PanelTitle>
+              <Row>
+                <CardValue label="TARGET">
+                  <Value $size={10}>
+                    {formatNegativeNumber(info?.monthlyTarget || 0)}
+                  </Value>
+                </CardValue>
+                <CardValue label="ACTUAL">
+                  <Value $size={10}>
+                    {formatNegativeNumber(info?.monthlyActual || 0)}
+                  </Value>
+                </CardValue>
+                <CardValue label="BALANCE">
+                  <Value $size={10}>
+                    {formatNegativeNumber(info?.monthlyBalance || 0)}
+                  </Value>
+                </CardValue>
+              </Row>
+            </Panel>
+            <Panel>
+              <PanelTitle>TODAYS PERFORMANCE</PanelTitle>
+              <Row>
+                <CardValue label="TARGET">
+                  <Value $size={10}>
+                    {formatNegativeNumber(info?.todaysTarget || 0)}
+                  </Value>
+                </CardValue>
+                <InputCell>
+                  <TextInput
+                    inputStyle={smallInputStyle}
+                    onChangeText={text => {
+                      setTodayActual(digitsOnly(text))
+                      setActualError("")
+                    }}
+                    keyboardType="numeric"
+                    value={todayActual}
+                  />
+                  <Caption>BOOKED</Caption>
+                </InputCell>
+                <CardValue label="INDEX">
+                  <Value $size={10}>{formatNegativeNumber(displayIndex)}</Value>
+                </CardValue>
+              </Row>
+            </Panel>
+            {actualError ? <ErrorText $center>{actualError}</ErrorText> : null}
+            <Panel>
+              <PanelTitle>AVAILABILITY</PanelTitle>
+              <Row>
+                <CardValue label="NPL">
+                  <Value $size={14}>{displayNpi}</Value>
+                </CardValue>
+                <CardValue label="LISTED SKU">
+                  <Value $size={14}>{info?.listedSku}</Value>
+                </CardValue>
+                <CardValue label="PROMO">
+                  <Value $size={14}>{displayPromo}</Value>
+                </CardValue>
+              </Row>
+              <Row $marginTop={8}>
+                <Cell>
+                  <TextInput
+                    inputStyle={smallInputStyle}
+                    onChangeText={text => {
+                      setNpi(digitsOnly(text))
+                      setNpiError("")
+                    }}
+                    value={npi}
+                    keyboardType="numeric"
+                  />
+                </Cell>
+                <Cell />
+                <Cell>
+                  <TextInput
+                    inputStyle={smallInputStyle}
+                    onChangeText={text => {
+                      setPromo(digitsOnly(text))
+                      setPromoError("")
+                    }}
+                    value={promo}
+                    keyboardType="numeric"
+                  />
+                </Cell>
+              </Row>
+            </Panel>
+            {npiError ? <ErrorText $center>{npiError}</ErrorText> : null}
+            {promoError ? <ErrorText $center>{promoError}</ErrorText> : null}
+            <Panel>
+              <PanelTitle>VISIBILITY - ACTIVATION</PanelTitle>
+              <OptionRow>
+                <CheckBoxWithValue
+                  isCheck={isPlanogram}
+                  onPress={() => setIsPlanogram(prev => !prev)}
+                  label="PLANOGRAM"
                 />
-                <Caption>BOOKED</Caption>
-              </InputCell>
-              <CardValue label="INDEX">
-                <Value $size={10}>{formatNegativeNumber(displayIndex)}</Value>
-              </CardValue>
-            </Row>
-          </Panel>
-          {actualError ? <ErrorText $center>{actualError}</ErrorText> : null}
-          <Panel>
-            <PanelTitle>AVAILABILITY</PanelTitle>
-            <Row>
-              <CardValue label="NPL">
-                <Value $size={14}>{displayNpi}</Value>
-              </CardValue>
-              <CardValue label="LISTED SKU">
-                <Value $size={14}>{info?.listedSku}</Value>
-              </CardValue>
-              <CardValue label="PROMO">
-                <Value $size={14}>{displayPromo}</Value>
-              </CardValue>
-            </Row>
-            <Row $marginTop={8}>
-              <Cell>
-                <TextInput
-                  inputStyle={smallInputStyle}
-                  onChangeText={text => {
-                    setNpi(digitsOnly(text))
-                    setNpiError("")
-                  }}
-                  value={npi}
-                  keyboardType="numeric"
+                <CheckBoxWithValue
+                  isCheck={isPricing}
+                  onPress={() => setIsPricing(prev => !prev)}
+                  label="PRICING"
                 />
-              </Cell>
-              <Cell />
-              <Cell>
-                <TextInput
-                  inputStyle={smallInputStyle}
-                  onChangeText={text => {
-                    setPromo(digitsOnly(text))
-                    setPromoError("")
-                  }}
-                  value={promo}
-                  keyboardType="numeric"
+                <CheckBoxWithValue
+                  isCheck={isPromo}
+                  onPress={() => setIsPromo(prev => !prev)}
+                  label="PROMO"
                 />
-              </Cell>
-            </Row>
-          </Panel>
-          {npiError ? <ErrorText $center>{npiError}</ErrorText> : null}
-          {promoError ? <ErrorText $center>{promoError}</ErrorText> : null}
-          <Panel>
-            <PanelTitle>VISIBILITY - ACTIVATION</PanelTitle>
-            <OptionRow>
-              <CheckBoxWithValue
-                isCheck={isPlanogram}
-                onPress={() => setIsPlanogram(prev => !prev)}
-                label="PLANOGRAM"
-              />
-              <CheckBoxWithValue
-                isCheck={isPricing}
-                onPress={() => setIsPricing(prev => !prev)}
-                label="PRICING"
-              />
-              <CheckBoxWithValue
-                isCheck={isPromo}
-                onPress={() => setIsPromo(prev => !prev)}
-                label="PROMO"
-              />
-            </OptionRow>
-          </Panel>
-          <TextInput
-            label="Issues and Opportunities:"
-            onChangeText={text => {
-              setIssues(text)
-              setIssuesError("")
-            }}
-            multiline={true}
-            value={issues}
-            numberOfLines={2}
-            inputStyle={textAreaStyle}
-            textAlignVertical="top"
-            maxLength={1000}
-          />
-          {issuesError ? <ErrorText>{issuesError}</ErrorText> : null}
-          <TextInput
-            label="Action Plan and Next Step:"
-            onChangeText={text => {
-              setAction(text)
-              setActionError("")
-            }}
-            multiline={true}
-            value={action}
-            numberOfLines={2}
-            inputStyle={textAreaStyle}
-            textAlignVertical="top"
-            maxLength={1000}
-          />
-          <ErrorText>{actionError}</ErrorText>
-        </Form>
-      </Scroll>
-    </Container>
+              </OptionRow>
+            </Panel>
+            <TextInput
+              label="Issues and Opportunities:"
+              onChangeText={text => {
+                setIssues(text)
+                setIssuesError("")
+              }}
+              multiline={true}
+              value={issues}
+              numberOfLines={2}
+              inputStyle={textAreaStyle}
+              textAlignVertical="top"
+              maxLength={1000}
+            />
+            {issuesError ? <ErrorText>{issuesError}</ErrorText> : null}
+            <TextInput
+              label="Action Plan and Next Step:"
+              onChangeText={text => {
+                setAction(text)
+                setActionError("")
+              }}
+              multiline={true}
+              value={action}
+              numberOfLines={2}
+              inputStyle={textAreaStyle}
+              textAlignVertical="top"
+              maxLength={1000}
+            />
+            <ErrorText>{actionError}</ErrorText>
+          </Form>
+        </Scroll>
+      </Container>
+    </KeyboardAvoidingView>
   )
 }

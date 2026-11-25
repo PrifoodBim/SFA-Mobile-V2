@@ -17,10 +17,11 @@ const Label = styled.Text`
   color: ${props => props.theme.color.grey};
 `
 
-const Field = styled.TextInput`
+// Multi-line text areas get top/bottom padding so the text doesn't touch the border.
+const Field = styled.TextInput<{ $multiline: boolean }>`
   width: 100%;
   height: 40px;
-  padding: 0 12px;
+  padding: ${props => (props.$multiline ? "10px 12px" : "0 12px")};
   border-width: 1px;
   border-color: ${props => props.theme.color.grey300};
   border-radius: 6px;
@@ -40,7 +41,7 @@ export default function TextInput(props: Readonly<Props>) {
   return (
     <Wrapper>
       {label ? <Label style={labelStyle}>{label}</Label> : null}
-      <Field style={inputStyle} {...rest} />
+      <Field $multiline={!!rest.multiline} style={inputStyle} {...rest} />
       {errorText ? <ErrorText>{errorText}</ErrorText> : null}
     </Wrapper>
   )

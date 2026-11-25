@@ -18,7 +18,7 @@ export async function exitCustomerVisit(): Promise<boolean> {
     await alert({
       title: "Incomplete Transaction",
       message:
-        "You have a saved OSA transaction. Please complete and save the DAR before exiting this customer.",
+        "You have a saved OSA transaction. Please complete and save the DSR before exiting this customer.",
     })
     return false
   }

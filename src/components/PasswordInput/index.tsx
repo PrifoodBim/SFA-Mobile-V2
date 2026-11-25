@@ -30,10 +30,13 @@ const Row = styled.View`
   background-color: ${props => props.theme.color.white};
 `
 
+// Explicit text color (same as TextInput): without it Android falls back to
+// the system text color, which can be white on white and hide the dots.
 const Field = styled.TextInput`
   width: 80%;
   height: 40px;
   padding: 0 12px;
+  color: ${props => props.theme.color.grey500};
 `
 
 const Toggle = styled.TouchableOpacity`
