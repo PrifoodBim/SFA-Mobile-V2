@@ -18,7 +18,7 @@ const currentMonth = displayMonthAndYear(new Date())
 export const customerDashboardKpi: KpiDashboardType[] = [
   {
     icon: KPI_ICONS.target,
-    description: "Annual",
+    description: "Year-to-Date",
     type: "TARGET",
     color: "#6F42C1",
     key: "ytdTarget",

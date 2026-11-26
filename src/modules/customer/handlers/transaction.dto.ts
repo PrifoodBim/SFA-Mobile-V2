@@ -58,5 +58,5 @@ export const TRANSACTION_NAME: Record<TransactionType, string> = {
   [TransactionType.PLANOGRAM]: "Planogram",
   [TransactionType.INVENTORY]: "Inventory",
   [TransactionType.ORDER]: "Suggested Order",
-  [TransactionType.DAR]: "DAR",
+  [TransactionType.DAR]: "DSR",
 }

@@ -44,8 +44,8 @@ export default function AuthFooter(props: Readonly<Props>) {
 
   return (
     <Wrapper $isFloating={isFloating}>
-      <Copyright $isSpaced={isSpaced}>Copyright @ 2024</Copyright>
-      <Build $color={buildColor}>build {" " + VERSION}</Build>
+      <Copyright $isSpaced={isSpaced}>CopyRight @ 2025</Copyright>
+      <Build $color={buildColor}>Build {VERSION}</Build>
     </Wrapper>
   )
 }

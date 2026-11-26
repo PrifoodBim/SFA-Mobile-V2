@@ -20,7 +20,7 @@ export type OptionList = TouchableOpacityProps & {
   description?: string
   isEmpty?: boolean
   route: RoutePath
-  /** Shows a check mark once saved, a warning while its requirements are missing. */
+  /** Shows a warning triangle until its transaction is saved, then a check mark. */
   transactionKey?: TransactionType | null
 }
 
@@ -109,7 +109,10 @@ export default function OptionCard(props: Readonly<OptionList>) {
           <Icon name={MaterialIcon.CHECK} size={24} />
         </StatusIcon>
       )}
-      {status === TransactionStatus.LOCKED && (
+      {/* Triangle until the module's transaction is saved, whether or not it
+          can be opened yet; replaced by the check once saved. */}
+      {(status === TransactionStatus.LOCKED ||
+        status === TransactionStatus.OPEN) && (
         <StatusIcon>
           <Icon name={MaterialIcon.WARNING} size={24} color={color.yellow400} />
         </StatusIcon>
