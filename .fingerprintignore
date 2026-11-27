@@ -1,0 +1,5 @@
+# React Native's Gradle plugin rewrites library manifests in node_modules during
+# local Android builds (strips the `package` attribute). EAS computes the
+# fingerprint before Gradle runs, so these files would make the local and EAS
+# runtime versions differ. Library changes are still caught via their package.json.
+node_modules/**/android/src/main/AndroidManifest.xml

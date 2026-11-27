@@ -1,0 +1,32 @@
+export enum MaterialIcon {
+  BACK = "arrow-back-ios",
+  HOME = "home",
+  SEARCH = "search",
+  BELL = "bell",
+  LOGOUT = "logout",
+  CALENDAR = "calendar-month",
+  ARROW_RIGHT_OUTLINE = "arrow-right-circle-outline",
+  CLOSE_BOX_OUTLINE = "close-box-outline",
+  CAMERA_ALT = "camera-alt",
+  MINUS = "minus",
+  PLUS = "plus",
+  PLUS_BOX_OUTLINE = "plus-box-outline",
+  SAVE = "save",
+  DOWN = "keyboard-arrow-down",
+  FILE_UPLOAD = "file-upload",
+  FILTER_OUTLINE = "filter-outline",
+  CHEVRON_LEFT = "chevron-left",
+  CHEVRON_RIGHT = "chevron-right",
+  CHECK = "check",
+  CLOSE = "close",
+  EYE_OUTLINE = "eye-outline",
+  EYE_OFF_OUTLINE = "eye-off-outline",
+  HIDE_IMAGE = "hide-image",
+  MARK_EMAIL_READ = "mark-email-read",
+  MARK_EMAIL_UNREAD = "mark-email-unread",
+  WARNING = "warning",
+}
+
+export enum FoundationIcon {
+  TARGET = "target",
+}
